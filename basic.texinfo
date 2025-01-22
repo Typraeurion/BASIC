@@ -1,0 +1,820 @@
+\input texinfo   @c -*-texinfo-*-
+@setfilename basic.info
+@settitle Beginner's All-purpose Symbolic Instruction Code
+
+@c Define a new index for BASIC statements:
+@defindex st
+
+@c Macro overrides for plain text output
+@ifinfo
+@macro pi
+pi
+@end macro
+@end ifinfo
+
+@smallbook
+@setchapternewpage on
+
+@titlepage
+@title{BASIC}
+@subtitle{Beginner's All-purpose Symbolic Instruction Code}
+@author{(This implementation)}
+@author{by @email{trevin@@xmission.com, Trevin Beattie}}
+
+@page
+Copyleft @copyright{}MM Trevin Beattie
+
+Parts of this manual and much researched data comes from the book
+@cite{Basic Computer Games} edited by @w{David H.} Ahl and copyright
+@copyright 1978 by Creative Computing (@sc{isbn}: 0-89480-052-3).  I
+have tried to avoid copyright infringement by generalizing as much as
+possible, but we must still give credit to this book as one of the best
+sources of the original language.
+@end titlepage
+
+@contents
+
+@ifinfo
+@node Top, Introduction, , (dir)
+@top Menu
+@menu
+* Introduction::
+* General Syntax::
+* Expressions::
+* Statements::
+* Comprison with Other BASICs::
+@end menu
+
+@end ifinfo
+
+@node Introduction, General Syntax, Top, Top
+@chapter Introduction
+
+@cindex @sc{b.a.s.i.c.}, definition of
+
+@sc{Basic} is one of the oldest high-level computer languages.  The
+acronym @sc{b.a.s.i.c.}@: stands for ``Beginner's All-Purpose Symbolic
+Instruction Code''; it was designed to be easy to learn and use, and (in
+the author's opinion) is the best language for an aspiring programmer to
+start learning how to tell the computer to do things.
+
+@cindex interpreted
+
+Since @sc{basic} is an interpreted language, it is also handy for those
+`quick-and-dirty' jobs a user has need for from time to time.  Being
+@dfn{interpreted} means that when you type a statement in, it is
+executed right away.  This is more convenient than @dfn{compiled}
+languages (such as `@sc{c}'), in which you must first write the whole
+program in a text editor, then compile the program, before you can run
+it.
+
+@cindex Dartmouth @sc{basic}
+
+Dartmouth is regarded as the original source of the @sc{basic}
+programming language, written back in the late 50's or 60's for
+mainframe computers such as the @sc{dec} @sc{pdp-11} at educational
+institutions.  When microcomputers hit the market, @sc{basic} was ported
+to these computers as the primary programming language, and its
+popularity rose dramatically.
+
+The only drawback to @sc{basic} was that when it was ported to these
+dozen different microcomputers, the language was not standardized, so
+small variations were introduced from one machine to the next.
+(@xref{Comprison with Other BASICs} for details.)  In order to get a
+@sc{basic} program from one computer to work on another, a user had to
+understand the way @sc{basic} was implemented on both machines.  Also,
+many microcomputer vendors added extensions to the @sc{basic} language
+to take advantage of features available on their computers which were
+different from any other machine.
+
+@cindex standardization
+@cindex True@sc{basic}
+@cindex @sc{ansi}
+
+A couple of decades later (in the late 80's, I think) the American
+National Standards Institute (@sc{ansi}) attempted to address this
+problem by defining a standard for the @sc{basic} language.  Around this
+same time, however, some vendor had the bright idea of changing
+@sc{basic} from an unstructured language to a structured one, which
+involved (among other things) getting rid of all line numbers.  The
+resulting language looks @emph{nothing} like any of the original
+microcomputer @sc{basic}s, and (to my knowledge) there is only one
+vendor which actually implements this standard: True@sc{basic}.
+
+In this implementation, I have attempted to return to the original
+implementations of @sc{basic} as much as possible, so that program
+listings from the microcomputers of the 70's and early 80's can be
+entered and run on modern systems with little or no modification.  The
+following chapters describe the @sc{basic} language for the beginner,
+with notes about this specific implementation, and a comparison of other
+@sc{basic} implementations.
+
+@node General Syntax, Lines, Introduction, Top
+@chapter General Syntax
+
+@node Lines, Statement Syntax, General Syntax, General Syntax
+@section Lines
+
+@stindex @code{REM}
+
+A @sc{basic} programs consists of lines of instructions.  A @dfn{line}
+starts with a number, which determines the order in which the
+instructions are followed.  For an example, we will introduce the
+@sc{basic} statement @code{REM}, which lets you add a `@sc{rem}ark' to
+the program.  If you were to enter the following lines:
+
+@cartouche
+@example
+@kbd{30 REM JACK FELL DOWN AND BROKE HIS CROWN
+20 REM TO FETCH A PAIL OF WATER.
+40 REM AND JILL CAME TUMBLING AFTER.
+10 REM JACK AND JILL WENT UP THE HILL}
+@end example
+@end cartouche
+
+@noindent
+then @sc{basic} would interpret them in this order:
+
+@cartouche
+@example
+10 REM JACK AND JILL WENT UP THE HILL
+20 REM TO FETCH A PAIL OF WATER.
+30 REM JACK FELL DOWN AND BROKE HIS CROWN
+40 REM AND JILL CAME TUMBLING AFTER.
+@end example
+@end cartouche
+
+By convention, when you are writing a program you would normally number
+your lines in multiples of ten.  This will allow you or someone else to
+insert additional lines into the program at a later time.
+
+Besides ordering, line numbers have one more very important function:
+many statements allow @sc{basic} to `jump' from one point in the program
+to another, skipping over intervening lines or even going back to a
+previous line in the program.  These statements use line numbers to tell
+@sc{basic} which line to execute next.
+
+@node Statement Syntax, A Note On Case, Lines, General Syntax
+@section Statements
+
+@stindex @code{LET}
+@stindex @code{PRINT}
+
+The simplest lines in @sc{basic} consist of a single statement.  Here
+are two lines---one which contains a @code{LET} statement, and the other
+contains a @code{PRINT} statement:
+
+@cartouche
+@example
+10 LET X=1+5/3
+20 PRINT X
+@end example
+@end cartouche
+
+This program will first compute the value of @var{X}, and then print it
+(2.66667).  A line can contain more than one statement; multiple
+statements are separated by a colon (@samp{:}).  The previous example
+could also be written:
+
+@cartouche
+@example
+10 LET X=1+5/3:PRINT X
+@end example
+@end cartouche
+
+@cindex interpreted
+@cindex @code{READY}
+
+Because @sc{basic} is an interpreted language, you don't have to prefix
+a statement with a line number.  Any statement or group of statements
+you enter without a preceding line number is executed immediately by
+@sc{basic}.
+
+@cartouche
+@example
+@kbd{LET X=1+5/3:PRINT X}
+2.66667
+
+READY
+@end example
+@end cartouche
+
+The @code{READY} line printed by @sc{basic} indicates that @sc{basic}
+has finished executing the instructions you have it and is ready to
+accept further instructions.
+
+@node A Note On Case, Data Types, Statement Syntax, Statement Syntax
+@unnumberedsubsec A Note On Case
+
+As you have seen in the examples so far, @sc{basic} programs are
+typically entered in all uppercase.  Historically @sc{basic} has been an
+uppercase-only language, because many of the earliest teletype machines
+did not have a lowercase character set.
+
+Most of the old microcomputers had both upper- and lowercase characters,
+but by default all text was entered in uppercase.  Some versions of
+@sc{basic} were case-sensitive, meaning that if you attempted to enter a
+statement in lower case, the computer would not be able to understand
+you.
+
+@cindex case sensitivity
+
+This implementation of @sc{basic} is case-insensitive.  You can enter
+statements in either uppercase or lowercase, or a mixture of both, and
+@sc{basic} will be able to recognize them.  When you list your program,
+all words that @sc{basic} knows will automatically be converted to
+uppercase.  The same applies to variable names (@xref{Variables}),
+except that variable names retain the same case the had when you first
+used them.
+
+The exception to this is strings (@xref{Data Types}.) @ @sc{Basic}
+itself doesn't care what the contents of a string are, but when you
+compare two strings, lowercase letters are considered different than
+their uppercase counterparts.
+
+To ensure compatibility with other @sc{basic}s, you should enter
+everything in upper case only.
+
+@node Data Types, Expressions, A Note On Case, General Syntax
+@section Data Types
+
+@sc{Basic} has only two data types: numbers and @dfn{strings} (any
+arbitrary sequence of numbers, digits, punctuation marks, etc.).
+
+@cindex number
+@cindex floating-point
+@cindex exponent
+@cindex speed of light
+
+A simple number is entered in @sc{basic} just as it would be in any
+other (computer or human) language.  Numbers in @sc{basic} can have a
+@dfn{floating point}, such as @code{3.14159} (the value of @math{@pi}).
+You can also specify an exponential multiplier for exceptionally large
+or small numbers.  The syntax for an exponential number is
+@var{num}@code{E}[@code{+}@math{|}@w{@code{-}}]@var{exp}, which means
+{@catcode`@^=7 @math{num @times 10^{exp}}}.  So, for example, to enter
+the speed of light (@math{c}, 300 thousand kilometers per second), you
+could type @kbd{3.0E+8}.
+
+Numbers in this implementation of @sc{basic} can have any value up to
+{@catcode`@^=7 @math{10^{308}}} in magnitude, and retain up to 15
+digits of precision.  (When @sc{basic} prints out numbers, however, it
+only displays six significant digits.  In program listings,
+floating-point numbers are also reduced to six significant digits, but
+integers less than 4 billion will show all digits.)
+
+@cindex string
+
+Strings are entered into programs by enclosing them in double quotation
+marks, @samp{"LIKE THIS"}.  A string can contain any regular character
+except another double quotation mark or @key{Return}.
+
+@node Expressions, Variables, General Syntax, Top
+@chapter Expressions
+
+@node Variables, Arrays, Expressions, Expressions
+@section Variables
+
+One of the nice features of programs is that the can repeat the same
+sequence of instructions using different starting values, thus
+generating different results.  For example, to calculate the distance
+between a point at @math{(0,0)} and @math{(3,4)}, you could enter the
+statement:
+
+@cartouche
+@example
+@kbd{PRINT SQR(3*3+4*4)}
+5
+
+READY
+@end example
+@end cartouche
+
+But what if you wanted to repeat the calculation with different end
+points, or even different starting points?  To make a more
+general-purpose program, you would define a set of @dfn{variables} to
+represent the starting and ending points, and perform your computations
+on the variables instead of the actual numbers:
+
+@cartouche
+@example
+10 PRINT SQR((X1-X0)*(X1-X0)+(Y1-Y0)*(Y1-Y0))
+@end example
+@end cartouche
+
+You can see that this statement is very similar to the equations you
+studied in algebra.  Now, when the program is supplied with any
+arbitrary starting and ending coordinates, it will show the distance
+between those points, and you don't have to change the formula.
+
+@cindex variables
+
+@sc{Basic} has two basic variable types corresponding to its data types:
+numeric variables and string variables.  A numeric variable name
+consists of a series of letters and numbers, with the rule that the
+first character in the name must be a letter.  So, for example, a
+variable name can be as short as @var{X}, or as long as
+@var{A1ANDA2ANDA3ANDA4} or more!  (However, we recommend keeping your
+variable names short.)
+
+A string variable is named just like a numeric variable, but with a
+dollar sign (@samp{$}) tagged at the end, as in @var{A$} or
+@var{PLAYER2NAME$}.  String variables are distinct from numeric
+variables, so, for example, you can use both @var{N} and @var{N$} in
+your program.
+
+@node Arrays, Assignment, Variables, Expressions
+@section Arrays
+
+@cindex arrays
+@cindex variable arrays
+
+At times you may wish to have a large set of related variables, for
+example elements in a vector.  For this purpose, you can define a
+@dfn{variable array}, which is like a list of values.  Unlike simple
+variables, which you can make up and use as you need them, an array must
+be defined ahead of time so that @sc{basic} knows how big it is.  This
+is done with the @code{DIM} (@sc{dim}ension) statement:
+
+@cartouche
+@example
+10 DIM X(10),Y(10)
+@end example
+@end cartouche
+
+This example defines two arrays, @var{X} and @var{Y}, having ten
+elements each.  To use a particular element of an array, just give the
+array `subscript' in parentheses, as in @samp{X(1)} or @samp{Y(4)}.  The
+subscript can even be another variable or an arithmetic expression, as
+in @samp{X(2*N-1)}.
+
+Variable arrays are distinct from simple variables, so you could, if you
+wanted to, use both @var{X} and @var{X(N)} in your program; the value of
+@var{X} is distinct from any of the elements of @var{X(N)}.  For
+clarity, however, we do not recommend this.
+
+An array can have more than one @dfn{dimension}.  To define a
+multi-dimensional array, use the @code{DIM} statement just as with a
+one-dimensional array, and specify the size of each dimension separated
+by commas within the variable's parentheses.  For example:
+
+@cartouche
+@example
+10 DIM M(7,9),N(5,5,5,5,5)
+@end example
+@end cartouche
+
+@noindent
+defines a two-dimensional matrix @var{M} with 7 rows and 9 columns, and
+a 5-dimensional array @var{N} where the size of each dimension is five
+(for a total of {@catcode`@^=7 @math{5^5}}, or 3125 elements!).
+Remember that when you access an element of an array, you must provide
+the same number of subscripts as the number of dimensions in the array.
+If you give too few or too many subscripts, you will get an error.
+
+You can re-dimension an array at any time, to give it a different size
+or even a different number of dimensions.  Be warned, however, that when
+you do, all of the previous values contained in the array will be lost.
+A newly dimensioned numeric array will have all of its elements set to
+zero; a string array will start out with all of its strings empty.
+
+@subsection Caveat - Subscript Starting Point
+
+@cindex array subscript base
+
+Older @sc{basic}s did not agree on how array elements should be
+numbered; some versions numbered the array subscripts from 1 to @var{n}
+(where @var{n} is the size of the array), while others numbered the
+subscript from 0 to @math{n-1}.  This implementation allows either
+origin; your arrays actually have elements numbered from 0 through
+@var{n} for a total of @math{n+1} elements.  But you should restrict
+your indexing to either a 1-base or 0-base.
+
+@node Assignment, Operators, Arrays, Expressions
+@section Assignment
+
+@stindex @code{LET}
+
+The basic method of assigning a value to your variable is with the
+@code{LET} statement, as in the following example:
+
+@cartouche
+@example
+10 LET M(X(I),Y(I))=I
+@end example
+@end cartouche
+
+In this version of @sc{basic}, like most microcomputer versions, the
+keyword @code{LET} is optional; so you can get the same result just by
+typing:
+
+@cartouche
+@example
+10 M(X(I),Y(I))=I
+@end example
+@end cartouche
+
+@node Operators, Mathematical Operators, Assignment, Expressions
+@section Operators
+
+@node Mathematical Operators, Logical Operators, Operators, Operators
+@subsection Mathematical Operators
+
+@findex + @r{(for addition)}
+@findex - @r{(for subtraction)}
+@findex *
+@findex /
+@cindex arithmetic operators
+@findex ^
+@cindex exponentiation
+
+@sc{Basic} understands the basic arithmetic operators @samp{+} and
+@samp{-} for addition and subtraction, and the characters @samp{*} and
+@samp{/} for multiplication and division.  You can also use the @samp{^}
+character for exponentiation; entering @kbd{@var{X}^@var{Y}} will yield
+the result of {@catcode`@^=7 @math{x^y}}.
+
+Complex expressions are evaluated in standard algebraic form---operators
+of higher precedence (@samp{^}) are evaluated before operators of lower
+precedence (@samp{+}, @samp{-}), and operators of equal precedence are
+evaluated from left to right.
+
+@findex - @r{(for negation)}
+@cindex negation
+
+The @samp{-} operator serves a dual purpose.  In addition to
+subtraction (no pun intended), it is also used to negate a number---to
+change a number from positive to negative or vice-versa.  Negation,
+unlike all of the other operators, has a right-to-left association@dots@
+but you wouldn't use multiple negative signs in a row now, would you?
+
+You may use parentheses to change the order of evaluation.  For example,
+the expression @kbd{5+4/3*2} is evaluated as @math{5+((4@div3)@times2)},
+resulting in 7.66667.  To evaluate the formula @math{5+4@over3@times2}
+you would type in @kbd{(5+4)/(3*2)}, which will give you 1.5.
+
+@node Logical Operators, String Operators, Mathematical Operators, Operators
+@subsection Logical Operators
+
+@cindex relational operators
+
+There are relational operators you can use to compare two numbers or
+expressions.  These operators are normally used in the @code{IF..THEN}
+statement (@xref{IF}).  Each of these operators results in a `true' or
+`false' answer, depending on whether the condition is true for the
+values on either side of the operator.
+
+@findex =
+@findex <>
+@findex <
+@findex >
+@findex <=
+@findex >=
+
+The relational operators are @samp{=} (for equality), @samp{<>}
+(@math{@neq}, for inequality), @samp{<} (left value less than the right
+value), @samp{>} (left value greater than the right value), @samp{<=}
+(@math{@le}, less than or equal), and @samp{>=} (@math{@ge}, greater
+than or equal).
+
+Note that in this implementation, in order to reduce errors due to
+rounding, comparisons are only done with six digits of precision, unless
+the magnitude of the number is greater than {@catcode`@^=7
+@math{10^{38}}} or smaller than {@catcode`@^=7 @math{10^{-38}}}.
+
+Relational operators also work with strings and string variables.  In
+such comparisons, one string is considered `less' than another if the
+first character which differs in the left string precedes the
+corresponding character of the right string according to their
+@sc{ascii} character codes.  Since string comparisons are
+case-sensitive, all uppercase letters precede all lowercase letters;
+thus the expression @samp{@w{"USA" < "United States"}} evaluates as
+true.
+
+@findex AND
+@findex OR
+@cindex boolean operators
+
+In addition to the relational operators, there are two boolean
+operators: @code{AND} and @code{OR}.  These can be used with relational
+comparisons to test two conditions and evaluates to true if both or
+either condition is true.
+
+The `truth' result of a logical operation is actually a value of either
+zero or one.  This is important when reading some existing @sc{basic}
+programs; some variations of @sc{basic} define `true' to be @math{-1},
+and some @sc{basic} programs use this value directly in arithmetic
+expressions assuming one sign or the other.  When you write a program,
+you should not assume that `true' is negative or positive, or even 1 for
+that matter.  The proper way to use a truth result in an expression is
+to first set the sign and magnitude with something like
+@samp{ABS(SGN(@var{condition}))} (@xref{ABS} and @ref{SGN}).
+
+@node String Operators, Precedence, Logical Operators, Operators
+@subsection String Operators
+
+@findex + @r{(for string concatenation)}
+@cindex string concatenation
+
+There is only one string operator defined in this version of @sc{basic},
+and it is present only because some popular @sc{basic} programs use it.
+The @samp{+} operator will @dfn{concatenate} two strings---it creates a
+new string consisting of the first and second strings run together.  For
+example, if the contents of the variable @var{NAME$} is @samp{"JOHN"},
+then the result of @samp{@w{"HELLO "+NAME$}} is @samp{@w{"HELLO JOHN"}}.
+
+@node Precedence, Functions, String Operators, Expressions
+@section Precedence
+
+@cindex precedence, operator
+@cindex operator precedence
+
+For the record, here is the order of precedence of all the operators
+@sc{basic} knows.  Operators higher up in the list will be evaluated
+before those below them.
+
+@enumerate
+@item @samp{-} (negation)
+@item @samp{^} (exponentiation)
+@item @samp{*}, @samp{/} (multiplication and division)
+@item @samp{+}, @samp{-} (addition and subtraction)
+@item Relational operators*
+@item @samp{AND}
+@item @samp{OR}
+@end enumerate
+
+*The relational operators have no associativity.  Unlike the arithmetic
+and boolean logic operators, you cannot place two relational operators
+in the same subexpression.  For example, the expression @samp{4<5=1<9}
+simply makes no sense.  Instead, you must explicitly parenthesize the
+subordinate relations, as in @samp{(4<5)=(1<9)} (which is true).  You do
+not need parentheses for comparisons separated by @samp{AND} and
+@samp{OR}; it is okay to say @samp{4<5 AND 1<9} (true).
+
+@node Functions, Simple Numeric Functions, Precedence, Expressions
+@section Functions
+
+Arithmetic will only get you so far.  @sc{Basic} provides a set of
+@dfn{functions} which perform more complex calculations (such as
+trigonometry) and manipulation of strings.
+
+@node Simple Numeric Functions, ABS, Functions, Functions
+@subsection Simple Numeric Functions
+
+@node ABS, INT, Simple Numeric Functions, Simple Numeric Functions
+@subsubsection @code{ABS}
+@findex ABS
+
+@code{ABS(@var{X})} will compute the absolute value of @var{X}; if
+@var{X} is negative, the answer will be positive.
+
+@node INT, RND, ABS, Simple Numeric Functions
+@subsubsection @code{INT}
+@findex INT
+
+@code{INT(@var{X})} returns the integer part of @var{X} by truncating
+any digits past the decimal point (rounding towards zero).
+
+@node RND, SGN, INT, Simple Numeric Functions
+@subsubsection @code{RND}, @code{SEED}
+@findex RND
+
+@samp{RND(1)} generates a random number in the range @math{[0,1)}.  This
+corresponds with the implementation of most other @sc{basic}s.  This
+version of @code{RND} has two additional variations: If you use
+@samp{RND(0)}, @sc{basic} will first @dfn{randomize} the random number
+generator (otherwise, the sequence of random numbers would come up the
+same the next time you started @sc{basic}).
+
+Secondly, you can use @samp{RND(@var{N})} to generate a random number in
+the range @math{[0,N)}.  This makes it a little easier to generate
+random numbers in an arbitrary range, rather than computing
+@samp{@var{N}*RND(1)}.
+
+@findex SEED
+
+If for some reason you need to repeat a sequence of random numbers (for
+example, to repeat a statistical analysis or to debug your program), you
+can use @samp{SEED(@var{X})} to @dfn{seed} the random number generator
+at a given starting point @var{X}.
+
+@node SGN, Trigonometric and Transcendental Functions, RND, Simple Numeric Functions
+@subsubsection @code{SGN}
+@findex SGN
+
+@code{SGN(@var{X})} will return one of three possible values: 1 if
+@var{X} is positive, @math{-1} if @var{X} is negative, or 0 of @var{X}
+is zero.
+
+@node Trigonometric and Transcendental Functions, ATN, SGN, Functions
+@subsection Trigonometric and Transcendental Functions
+
+In @sc{basic}, all trigonometric functions measure angles in degrees
+(0--360).
+
+@node ATN, COS, Trigonometric and Transcendental Functions, Trigonometric and Transcendental Functions
+@subsubsection @code{ATN}
+@findex ATN
+
+@code{ATN(@var{X})} computes the arctangent of @var{X}.
+
+@node COS, EXP, ATN, Trigonometric and Transcendental Functions
+@subsubsection @code{COS}
+@findex COS
+
+@code{COS(@math{@mit@Theta})} computes the cosine of @math{@mit@Theta}.
+
+@node EXP, LOG, COS, Trigonometric and Transcendental Functions
+@subsubsection @code{EXP}
+@findex EXP
+
+@code{EXP(@var{X})} computes the natural exponential of @var{X}, or
+{@catcode`@^=7 @math{e^X}}.
+
+@node LOG, SIN, EXP, Trigonometric and Transcendental Functions
+@subsubsection @code{LOG}
+@findex LOG
+
+@code{LOG(@var{X})} computes the natural logarithm of @var{X}.
+
+@node SIN, SQR, LOG, Trigonometric and Transcendental Functions
+@subsubsection @code{SIN}
+@findex SIN
+
+@code{SIN(@math{@mit@Theta})} computes the sine of @math{@mit@Theta}.
+@findex SQR
+
+@node TAN, String Functions, SQR, Trigonometric and Transcendental Functions
+@subsubsection @code{TAN}
+@findex TAN
+
+@code{TAN(@math{@mit@Theta})} computes the tangent of @math{@mit@Theta}.
+
+@node String Functions, LEN, TAN, Functions
+@subsection String Functions
+
+@node LEN, LEFT$, String Functions, String Functions
+@subsubsection @code{LEN}
+@findex LEN
+
+@code{LEN(@var{A$})} returns the length of the string @var{A$}.
+
+@node LEFT$, RIGHT$, LEN, String Functions
+@subsubsection @code{LEFT$}
+@findex LEFT$
+
+@code{LEFT$(@var{A$},@var{N})} makes a new string consisting of the
+first @var{N} characters of @var{A$}.  If @var{N} is greater than the
+length of @var{A$}, you will get a copy of the entire string.
+
+@node RIGHT$, MID$, LEFT$, String Functions
+@subsubsection @code{RIGHT$}
+@findex RIGHT$
+
+@code{RIGHT$(@var{A$},@var{N})} makes a new string consisting of the
+@emph{last} @var{N} characters of @var{A$}.  If @var{N} is greater than
+the length of @var{A$}, you will get a copy of the entire string.
+
+@node MID$, Numeric and String Conversion Functions, RIGHT$, String Functions
+@subsubsection @code{MID$}
+@findex MID$
+
+@code{MID$(@var{A$},@var{B},@var{N})} makes a new string consisting of
+@var{N} characters from @var{A$}, starting with the
+@var{B}{@catcode`@^=7 @math{{}^{th}}} character.  The first character in
+a string is numbered 1.  If @var{B} is greater than the length of
+@var{A$}, you will get an empty string.  If @math{B+N} is greater than
+the length of @var{A$}, you will get the right part of @var{A$} starting
+at the @var{B}{@catcode`@^=7 @math{{}^{th}}} character.
+
+@node Numeric and String Conversion Functions, ASC, MID$, Functions
+@subsection Numeric and String Conversion Functions
+
+@node ASC, CHR$, Numeric and String Conversion Functions, Numeric and String Conversion Functions
+@subsubsection @code{ASC}
+@findex ASC
+
+@code{ASC(@var{A$})} gives you the @sc{ascii} code of the first
+character in @var{A$}.
+
+@node CHR$, STR$, ASC, Numeric and String Conversion Functions
+@subsubsection @code{CHR$}
+@findex CHR$
+
+@code{CHR$(@var{X})} generates a 1-character string whose character's
+@sc{ascii} code is @var{X}.  This is especially useful for printing a
+quotation mark (@samp{CHR$(34)}) or certain control characters (i.e.,
+@samp{CHR$(7)} for an @sc{ascii} bell).
+
+@node STR$, VAL, CHR$, Numeric and String Conversion Functions
+@subsubsection @code{STR$}
+@findex STR$
+
+@code{STR$(@var{X})} makes the number @var{X} into a printable string.
+
+@node VAL, Statements, STR$, Numeric and String Conversion Functions
+@subsubsection @code{VAL}
+@findex VAL
+
+@code{VAL(@var{A$})} converts an @sc{ascii} representation of a number
+into a numerical value.  Note that if @var{A$} does not consist of (or
+at least start with) a number, the resulting value will be zero.
+
+@node Statements, Remarks, VAL, Top
+@chapter Statements
+
+@node Remarks, Working With Data, Statements, Statements
+@section Remarks (@code{REM})
+@cindex comments in the program
+@cindex remarks
+@stindex @code{REM}
+
+@code{REM} adds a @sc{rem}ark to the program.  @sc{Basic} ignores
+remarks when executing a program, but all text following the @code{REM}
+statement is preserved.
+
+@cartouche
+@example
+10 REM A GAME OF TIC-TAC-TOE BY JOHN DOE
+@end example
+@end cartouche
+
+Note that everything else up until the end of the line is considered
+part of the remark, so no other statement can follow @code{REM}.  (You
+can use this to your advantage sometimes if you want to temporarily
+remove a line of statements from the program.)
+
+Remarks help document what the program is doing.  You should sprinkle
+these statements liberally throughout your program so that another
+person reading the code later on can understand it more easily.
+
+@node Working With Data, LET, Remarks, Statements
+@section Working With Data
+
+@node LET, DIM, Working With Data, Statements
+@subsection @code{LET}
+@cindex assignment of values to variables
+@cindex variables, assigning values to
+@stindex @code{LET}
+
+To assign a value to a variable (@xref{Variables}), use the @code{LET}
+statement.  The syntax is @samp{LET @var{variable}=@var{expression}}.
+
+@cartouche
+@example
+50 LET Y=5/9*(X-32)
+@end example
+@end cartouche
+
+@cindex implied @code{LET}
+
+In most versions of @sc{basic} (including this one), the @code{LET}
+keyword is optional.  If you omit it, @sc{basic} will assume an
+@dfn{implied @code{LET}}.  This can make your code simpler and in some
+cases easier to understand.
+
+@cartouche
+@example
+20 PI=3.14159265
+60 F=C*9/5+32
+@end example
+@end cartouche
+
+@node DIM, DATA, LET, Statements
+@subsection @code{DIM}
+@cindex arrays
+@stindex @code{DIM}
+
+Use @code{DIM} to create one or more arrays.  The general syntax is
+@samp{DIM
+@var{variable}(@var{size}@r{[},@var{size}@dots@r{]})@r{[},@dots@r{]}}.
+You may create any number of arrays on one line (at least as many as
+will fit).  Arrays may be numeric or string.  Each array must have at
+least one dimension; the maximum number of dimensions is limited by the
+amount of available memory.  Each dimension can have a size as small as
+zero (not very useful) up to a maximum of 65535.
+
+@cartouche
+@example
+30 DIM X(10),R(2,3,5,7),A$(4,4)
+@end example
+@end cartouche
+
+@node DATA, READ, DIM, Statements
+@subsection @code{DATA}
+@cindex predefined data lists
+@stindex @code{DATA}
+
+@node Index, Index of Statements, , Top
+@unnumbered Index
+@printindex cp
+
+@node Index of Statements, Index of Functions, Index, Top
+@unnumbered Index of Statements
+@printindex st
+
+@node Index of Functions, Index of Statements, , Top
+@unnumbered Index of Functions
+@printindex fn
+
+@bye

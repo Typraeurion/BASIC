@@ -1,0 +1,61 @@
+<html><title>Standard Dartmouth BASIC Commands</title>
+<body bgcolor = "F5F5DC"><h1 align = "center">Standard Dartmouth
+BASIC Commands</h1><hr><table border = "1" cellpadding = "6"><tr><td
+    valign = "top" align = "left"><strong>Command</strong></td><td
+    valign = "top" align = "left"><strong>Definition</strong></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>data</strong> <var>object</var>
+{<strong>, </strong><var>object</var>}</p></td><td valign = "top"
+    align = "left"><p>Defines data objects used in the <strong>read</strong>
+statements.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>dim var (</strong><var>array1</var><strong>,</strong><var> </var>{<var>,array2</var>{<strong>,</strong><var>array3</var>}}<strong>)</strong></p></td><td
+    valign = "top" align = "left"><p>Defines dimensions for a group
+of arrays. The maximum number of dimensions permitted for an array
+is three.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>end</strong>
+</p></td><td valign = "top" align = "left"><p>Terminates the execution
+of a program.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>exit</strong></p></td><td
+    valign = "top" align = "left"><p>Terminates the execution of
+a script.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>for </strong><var>x</var><strong> = </strong><var>e1</var><strong> to </strong><var>e2</var><strong> </strong>{<strong>step </strong><var>e3</var>}</p></td><td
+    valign = "top" align = "left"><p>Starts execution of a loop.
+Loop execution is controlled by <var>x</var>, which ranges from
+<var>e1</var> to <var>e2</var> and is incremented by 1 (or optionally
+<var>e3</var>) for each repetition of the code in the loop.</p></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>goto </strong><var>n</var></p></td><td
+    valign = "top" align = "left"><p>Transfers control to the specified
+line.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>if</strong>
+<var>exp</var> <strong>then</strong> <var>s1</var> {<strong>else</strong>
+<var>s2</var>}</p></td><td valign = "top" align = "left"><p>Tests
+an expression, <var>exp</var>, for a true or false value and transfers
+control to <var>s1</var> if <var>exp</var> is true and to <var>s2</var>
+if <var>exp</var> is false.</p></td></tr><tr><td valign = "top"
+    align = "left"><p><strong>let </strong><var>x=exp</var></p></td><td
+    valign = "top" align = "left"><p>Assigns the value of an expression
+to a variable. If there is no command on a line, BASIC assumes a
+<strong>let</strong>.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>next </strong>{<var>x </var>{<strong>,</strong><var>y</var>}}</p></td><td
+    valign = "top" align = "left"><p>Defines the end of the for
+loop.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>print</strong>
+<var>#f list</var></p></td><td valign = "top" align = "left"><p>Outputs
+the values in <var>list</var> to the file identified in #<var>f</var>.
+The values in<var> list</var> are a comma-separated series of constants,
+variables, and expressions.</p></td></tr><tr><td valign = "top"
+    align = "left"><p><strong>print</strong> <var>list </var></p></td><td
+    valign = "top" align = "left"><p>Prints the values in <var>list</var>.
+The values are a comma-separated series of constants, variables,
+and expressions.</p></td></tr><tr><td valign = "top" align = "left"><p><strong>read</strong>
+<var>var</var> {<strong>,</strong><var>var</var>}</p></td><td
+    valign = "top" align = "left"><p>Reads data objects from <strong>data</strong>
+statements contained in the program.</p></td></tr><tr><td valign = "top"
+    align = "left"><p><strong>rem</strong> or <strong>` `</strong></p></td><td
+    valign = "top" align = "left"><p>Defines a comment. The BASIC
+interpreter NLM ignores comments when it interprets the script.</p></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>restore </strong>{<var>1 @p</var>}</p></td><td
+    valign = "top" align = "left"><p>Restores the data pointer to
+the first object in the <strong>data</strong> list. This allows
+the subsequent <strong>read</strong> statement to begin reading
+at the start of the <strong>data</strong> list.</p></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>return</strong></p></td><td
+    valign = "top" align = "left"><p>Returns from a subroutine to
+the line following the <strong>gosub</strong> subroutine call.</p></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>stop</strong></p></td><td
+    valign = "top" align = "left"><p>Stops execution of the script.</p></td></tr><tr><td
+    valign = "top" align = "left"><p><strong>tgosub </strong><var>l</var></p></td><td
+    valign = "top" align = "left"><p>Transfers control to the subroutine
+defined at the specified line.</p></td></tr></table></body></html>
