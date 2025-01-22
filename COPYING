@@ -1,0 +1,15 @@
+This BASIC interpreter (basic.y and its accompanying .c files) is
+being released to the public under the terms of the GNU General Public
+License version 3 (https://opensource.org/license/gpl-3-0) by the
+author (Trevin Beattie) after active development had been stalled for
+over twenty years.
+
+The example .BASIC code files are copied from “BASIC Computer Games”
+and “More BASIC Computer Games” by author David H. Ahl.  These books
+were released to the public domain on June 15, 2022 (according to a
+post on Facebook — see:
+https://www.facebook.com/groups/521427671543144/posts/1694495597569673/).
+
+Jeff Atwood has started a project to port all of the games in these
+two books to several more modern languages.  See:
+https://blog.codinghorror.com/updating-the-single-most-influential-book-of-the-basic-era/
