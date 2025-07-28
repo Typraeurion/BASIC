@@ -1,8 +1,13 @@
 /* Define a data structure for BASIC tokens,
  * which is how programs are stored in memory. */
 
+#include <stdio.h>
+
 /* All character strings must be word-aligned */
 #define WALIGN(x) (((x) + sizeof (short) - 1) & ~(sizeof (short) - 1))
+
+/* We'll support nesting LOADs up to 5 levels deep. */
+#define MAX_LOAD_NESTING 5
 
 struct string_value {
   unsigned short length;	/* Size in bytes of the string, *not*
@@ -72,6 +77,9 @@ extern var_u *variable_values;
 extern int function_table_size; /* Number of functions defined	*/
 extern struct fndef *function_table;
 
+/* Keep track of how far we've nested LOAD commands */
+extern unsigned int current_load_nesting;
+
 /* The program. */
 extern int program_size;	/* Number of lines in the program */
 extern struct line_header **program;
@@ -101,6 +109,10 @@ struct statement_header *find_statement (struct line_header *line,
 /* This function adds a new line to the program.
  * If a line with the same number already exists, it is deleted first. */
 void add_line (struct line_header *line);
+/* List a line from a program */
+void list_line (struct line_header *lp, FILE *to);
+/* List a token from a program statement */
+int list_token (unsigned short *tp, FILE *to);
 void remove_line (unsigned long number);
 void execute (struct line_header *);
 double eval_number (unsigned short **);

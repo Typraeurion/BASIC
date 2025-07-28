@@ -11,6 +11,8 @@
   /* Definitions of tokens to pass to the parser */
 #include "basic.tab.h"
 #include "tables.h"
+  /* Keep track of how far we've nested LOAD commands */
+unsigned int current_load_nesting = 0;
 %}
 
 /* Start condition for REM statements */
@@ -168,4 +170,21 @@ TAB	return TAB;
    * a single period) should fall through here. */
   printf ("ERROR- %s\n", yytext);
   return RESTOFLINE;
+}
+
+  /*
+   * On reaching End-of-File, check whether we are processing a LOAD
+   * statement.  If so, close the file and switch to the previous
+   * buffer. See the Flex manual on "Multiple input buffers".
+   */
+<<EOF>> {
+  if (--current_load_nesting < 0) {
+    yyterminate();
+  }
+  else {
+#ifdef DEBUG
+    fprintf (stderr, "End of file reached; switching back to the previous input\n");
+#endif
+    yypop_buffer_state();
+  }
 }

@@ -63,9 +63,6 @@ static void dump_tokens (unsigned short *);
 /* Arithmetic operators */
 %left OR
 %left AND
-%token LESSEQ "<="
-%token GRTREQ ">="
-%token NOTEQ "<>"
 %nonassoc LESSEQ "<="
 %nonassoc GRTREQ ">="
 %nonassoc NOTEQ "<>"
@@ -397,7 +394,7 @@ statement: assignment
 		   $<string>2->contents);
 #endif
 	  /* Allocate a new statement */
-	  $<tokens>$ = add_tokens ("tts", REM, STRING, $<string>2);
+	  $<tokens>$ = add_tokens ("tts", LOAD, STRING, $<string>2);
 	}
     | NEW               /* Erase the current program from memory */
 	{

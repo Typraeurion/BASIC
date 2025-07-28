@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tables.h"
 #include "basic.tab.h"
 
@@ -249,7 +250,7 @@ eval_numexpr (unsigned short **tpp)
 {
   unsigned short *tp = *tpp;
   double op1, op2;	/* Operands */
-  int op;		/* Operator */
+  unsigned short op;	/* Operator */
 
   /* Check for a unary operation -- negation */
   if (*tp == NEG)
@@ -314,7 +315,7 @@ double
 eval_strcond (unsigned short **tpp)
 {
   struct string_value *string1, *string2;
-  int op;
+  unsigned short op;
   int result;
 
   string1 = eval_string (tpp);

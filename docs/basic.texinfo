@@ -720,6 +720,8 @@ quotation mark (@samp{CHR$(34)}) or certain control characters (i.e.,
 into a numerical value.  Note that if @var{A$} does not consist of (or
 at least start with) a number, the resulting value will be zero.
 
+@c To Do: document the functions SEED, SQR, TAB
+
 @node Statements, Remarks, VAL, Top
 @chapter Statements
 
@@ -751,7 +753,7 @@ person reading the code later on can understand it more easily.
 @node Working With Data, LET, Remarks, Statements
 @section Working With Data
 
-@node LET, DIM, Working With Data, Statements
+@node LET, DIM, Working With Data, Working With Data
 @subsection @code{LET}
 @cindex assignment of values to variables
 @cindex variables, assigning values to
@@ -780,7 +782,7 @@ cases easier to understand.
 @end example
 @end cartouche
 
-@node DIM, DATA, LET, Statements
+@node DIM, DATA, LET, Working With Data
 @subsection @code{DIM}
 @cindex arrays
 @stindex @code{DIM}
@@ -800,10 +802,70 @@ zero (not very useful) up to a maximum of 65535.
 @end example
 @end cartouche
 
-@node DATA, READ, DIM, Statements
+@node DATA, READ, DIM, Working With Data
 @subsection @code{DATA}
 @cindex predefined data lists
 @stindex @code{DATA}
+
+The @code{DATA} statement defines a sequence of constant values that
+can be read sequentially by @code{READ} statements (described below).
+Each constant can be either numeric or string.  Multiple constants can
+be listed on a single @code{DATA} line separated by commas.
+
+@code{DATA} statements are ignored during program execution so they
+may be placed anywhere which is convenient or fits neatly with the
+code that uses it.
+
+@cartouche
+@example
+1000 DATA 42, 3.14159, "Hello"
+@end example
+@end cartouche
+
+@node READ, RESTORE, DATA, Working With Data
+@subsection @code{READ}
+@stindex @code{READ}
+
+The @code{READ} statement assigns the next constant from a @code{DATA}
+statement to a variable.  @sc{Basic} maintains an internal pointer to
+the datawhich starts at the first @code{DATA} statement and advances
+it to the next constant in the statement or the next line of
+@code{DATA} each time @code{READ} is used.
+
+Multiple data values can be read at once by supplying several values
+to the @code{READ} statement separated by commas.
+
+@cartouche
+@example
+50 READ A, PI, GREETING$
+@end example
+@end cartouche
+
+If a @code{READ} statement attemps to read more data than is
+available, an error will occur.  Likewise if the program tries to read
+a number into a string variable or a string into a numeric variable,
+an error will occur.
+
+@node RESTORE, , READ, Working With Data
+@subsection @code{RESTORE}
+@stindex @code{RESTORE}
+
+The @code{RESTORE} statement may be used to reset @sc{Basic}'s
+internal data pointer back to the first @code{DATA} statement in a
+program.  You can also provide a line number to this statement which
+will set the data pointer to the next @code{DATA} statement on or
+after the given line.
+
+@cartouche
+@example
+60 RESTORE
+70 IF A < 42 THEN RESTORE 1000
+@end example
+@end cartouche
+
+@c To Do: document the commands BYE, CONTINUE, DEF, ELSE, END, FOR,
+@c        GOSUB, GOTO, IF, INPUT, LIST, LOAD, NEW, NEXT, ON, PRINT,
+@c        READ, RETURN, RUN, SAVE, STOP
 
 @node Index, Index of Statements, , Top
 @unnumbered Index

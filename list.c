@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef YY_HEADER_EXPORT_START_CONDITIONS
+// Force lex.yy.h to define INITIAL, which we use in the LOAD command.
+#define YY_HEADER_EXPORT_START_CONDITIONS 1
+#endif
+#include "lex.yy.h"
 #include "tables.h"
 #include "basic.tab.h"
 
@@ -201,7 +206,7 @@ list_token (unsigned short *tp, FILE *to)
 	struct list_item *lip;
 
 #ifdef DEBUG
-	fputc ("[", to);
+	fputc ('[', to);
 #endif
 	tp++;
 	lip = &((struct list_header *) tp)->item[0];
@@ -219,7 +224,7 @@ list_token (unsigned short *tp, FILE *to)
 	    lip = (struct list_item *) &lip->tokens[k];
 	  }
 #ifdef DEBUG
-	fputc ("]", to);
+	fputc (']', to);
 #endif
 	return (((struct list_header *) tp)->length / sizeof (short) + 1);
       }
@@ -343,6 +348,41 @@ cmd_list (struct statement_header *stmt)
 }
 
 void
+cmd_load (struct statement_header *stmt)
+{
+  struct string_value *filename;
+  FILE *load_file;
+  struct line_header *lp;
+
+  if (*((unsigned short *) &stmt[1]) != STRING)
+    {
+      fputs ("Error: LOAD command followed by token ", stderr);
+      list_token ((unsigned short *) &stmt[1], stderr);
+      fputc ('\n', stderr);
+      return;
+    }
+  if (current_load_nesting >= MAX_LOAD_NESTING)
+    {
+      fputs ("Error: Maximum LOAD nesting exceeded\n", stderr);
+      return;
+    }
+  filename = (struct string_value *) &((unsigned short *) &stmt[1])[1];
+  load_file = fopen (filename->contents, "r");
+  if (load_file == NULL)
+    {
+      perror ("ERROR - LOAD: ");
+      return;
+    }
+
+#ifdef DEBUG
+  fprintf (stderr, "Switching parser input to %s\n", filename);
+#endif
+
+  yypush_buffer_state(yy_create_buffer(load_file, YY_BUF_SIZE));
+  current_load_nesting++;
+}
+
+void
 cmd_save (struct statement_header *stmt)
 {
   struct string_value *filename;
@@ -364,11 +404,17 @@ cmd_save (struct statement_header *stmt)
       return;
     }
 
+#ifdef DEBUG
+  fprintf (stderr, "Saving program to %s\n", filename);
+#endif
   for (lp = find_line (0, 1); lp != NULL;
        lp = find_line (lp->line_number + 1, 1))
     list_line (lp, save_file);
 
   fclose (save_file);
+#ifdef DEBUG
+  fprintf (stderr, "Finished saving %s\n", filename);
+#endif
 }
 
 void

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tables.h"
 #include "basic.tab.h"
 
@@ -36,7 +37,7 @@ static const struct {
   { _LET_, cmd_let },
   { LET, cmd_let },
   { LIST, cmd_list },
-  //  { LOAD, cmd_load },
+  { LOAD, cmd_load },
   { NEW, cmd_new },
   { NEXT, cmd_next },
   { ON, cmd_on },
