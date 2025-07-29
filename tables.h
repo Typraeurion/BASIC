@@ -78,7 +78,7 @@ extern int function_table_size; /* Number of functions defined	*/
 extern struct fndef *function_table;
 
 /* Keep track of how far we've nested LOAD commands */
-extern unsigned int current_load_nesting;
+extern signed int current_load_nesting;
 
 /* The program. */
 extern int program_size;	/* Number of lines in the program */

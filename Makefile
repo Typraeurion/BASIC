@@ -10,7 +10,7 @@ CFILES=basic.lex basic.y expression.c functions.c input.c \
      list.c print.c run.c tables.c wrap.c
 BFILES=examples/*.BASIC examples/*.patches examples/Animal.more
 
-.PHONY: all dvi pdf info clean distrib
+.PHONY: all dvi pdf info clean test distrib
 
 all: ${PROGRAM} pdf
 
@@ -49,6 +49,9 @@ pdf:
 
 info:
 	$(MAKE) -C Docs info
+
+test: basic
+	$(MAKE) -C tests
 
 distrib: BASIC.tar.gz
 

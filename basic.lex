@@ -12,7 +12,7 @@
 #include "basic.tab.h"
 #include "tables.h"
   /* Keep track of how far we've nested LOAD commands */
-unsigned int current_load_nesting = 0;
+signed int current_load_nesting = 0;
 %}
 
 /* Start condition for REM statements */
