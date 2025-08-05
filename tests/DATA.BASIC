@@ -1,0 +1,6 @@
+1000 REM This file only provides data values;
+1001 REM it does not do anything with them.
+1010 DATA 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377
+1020 DATA 610, 987, 1597, 2584, 4181
+1110 DATA "First", "Second", "Third", "Fourth", "Fifth"
+1120 DATA "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"

@@ -1,0 +1,4 @@
+10 PRINT "You should see this line."
+20 END
+30 PRINT "ERROR!  You should NOT have seen this."
+RUN

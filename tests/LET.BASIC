@@ -1,0 +1,3 @@
+LET X=10
+REM We need to use PRINT to verify the assignment
+PRINT X

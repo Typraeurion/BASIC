@@ -1,0 +1,11 @@
+REM This tests reading data from DATA.BASIC;
+REM that program needs to be loaded first.
+
+RESTORE 1120
+READ S$
+
+PRINT "The first string on line 1120 is ";CHR$(34);S$;CHR$(34)
+
+RESTORE
+READ Z
+PRINT "The first DATA value in the program is ";Z

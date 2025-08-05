@@ -80,7 +80,7 @@ popularity rose dramatically.
 The only drawback to @sc{basic} was that when it was ported to these
 dozen different microcomputers, the language was not standardized, so
 small variations were introduced from one machine to the next.
-(@xref{Comprison with Other BASICs} for details.)  In order to get a
+(@xref{Comparison with Other BASICs} for details.)  In order to get a
 @sc{basic} program from one computer to work on another, a user had to
 understand the way @sc{basic} was implemented on both machines.  Also,
 many microcomputer vendors added extensions to the @sc{basic} language
@@ -149,10 +149,10 @@ your lines in multiples of ten.  This will allow you or someone else to
 insert additional lines into the program at a later time.
 
 Besides ordering, line numbers have one more very important function:
-many statements allow @sc{basic} to `jump' from one point in the program
-to another, skipping over intervening lines or even going back to a
-previous line in the program.  These statements use line numbers to tell
-@sc{basic} which line to execute next.
+many statements allow @sc{basic} to `jump' from one point in the
+program to another, skipping over intervening lines or even going back
+to a previous line in the program (@xref{GOTO}.) These statements use
+line numbers to tell @sc{basic} which line to execute next.
 
 @node Statement Syntax, A Note On Case, Lines, General Syntax
 @section Statements
@@ -203,7 +203,7 @@ The @code{READY} line printed by @sc{basic} indicates that @sc{basic}
 has finished executing the instructions you have it and is ready to
 accept further instructions.
 
-@node A Note On Case, Data Types, Statement Syntax, Statement Syntax
+@node A Note On Case, Running Your Program, Statement Syntax, Statement Syntax
 @unnumberedsubsec A Note On Case
 
 As you have seen in the examples so far, @sc{basic} programs are
@@ -235,7 +235,19 @@ their uppercase counterparts.
 To ensure compatibility with other @sc{basic}s, you should enter
 everything in upper case only.
 
-@node Data Types, Expressions, A Note On Case, General Syntax
+@node Running Your Program, Data Types, Statement Syntax, General Syntax
+@section Running Your Program
+@stindex @code{RUN}
+
+After entering a complete program using line numbers, you tell
+@sc{basic} to run the program by entering ``@code{RUN}'' after the
+@code{READY} prompt.  @sc{Basic} will start executing statements from
+the first line of the program.
+
+@code{RUN} may also be used within a program, which will cause
+@sc{basic} to start it over from the beginning.
+
+@node Data Types, Exiting, A Note On Case, General Syntax
 @section Data Types
 
 @sc{Basic} has only two data types: numbers and @dfn{strings} (any
@@ -268,6 +280,16 @@ integers less than 4 billion will show all digits.)
 Strings are entered into programs by enclosing them in double quotation
 marks, @samp{"LIKE THIS"}.  A string can contain any regular character
 except another double quotation mark or @key{Return}.
+
+@node Exiting, Expressions, Data Types, General Syntax
+@section Exiting Out of @sc{Basic}
+@cindex exiting @sc{basic}
+@cindex quitting @sc{basic}
+@stindex @code{BYE}
+
+When you are finishing using the @sc{basic} programming language,
+enter ``@code{BYE}'' at the @code{READY} prompt to leave the
+interpreter.
 
 @node Expressions, Variables, General Syntax, Top
 @chapter Expressions
@@ -478,7 +500,7 @@ value), @samp{>} (left value greater than the right value), @samp{<=}
 than or equal).
 
 Note that in this implementation, in order to reduce errors due to
-rounding, comparisons are only done with six digits of precision, unless
+rounding, comparisons are only done with six digits of precision unless
 the magnitude of the number is greater than {@catcode`@^=7
 @math{10^{38}}} or smaller than {@catcode`@^=7 @math{10^{-38}}}.
 
@@ -516,12 +538,13 @@ to first set the sign and magnitude with something like
 @findex + @r{(for string concatenation)}
 @cindex string concatenation
 
-There is only one string operator defined in this version of @sc{basic},
-and it is present only because some popular @sc{basic} programs use it.
-The @samp{+} operator will @dfn{concatenate} two strings---it creates a
-new string consisting of the first and second strings run together.  For
-example, if the contents of the variable @var{NAME$} is @samp{"JOHN"},
-then the result of @samp{@w{"HELLO "+NAME$}} is @samp{@w{"HELLO JOHN"}}.
+There is only one string operator defined in this version of
+@sc{basic}, and it is present because some popular @sc{basic} programs
+use it.  The @samp{+} operator will @dfn{concatenate} two strings ---
+it creates a new string consisting of the first and second strings run
+together.  For example, if the contents of the variable @var{NAME$} is
+@samp{"JOHN"}, then the result of @samp{@w{"HELLO "+NAME$}} is
+@samp{@w{"HELLO JOHN"}}.
 
 @node Precedence, Functions, String Operators, Expressions
 @section Precedence
@@ -750,7 +773,7 @@ Remarks help document what the program is doing.  You should sprinkle
 these statements liberally throughout your program so that another
 person reading the code later on can understand it more easily.
 
-@node Working With Data, LET, Remarks, Statements
+@node Working With Data, Input and Output, Remarks, Statements
 @section Working With Data
 
 @node LET, DIM, Working With Data, Working With Data
@@ -846,11 +869,11 @@ available, an error will occur.  Likewise if the program tries to read
 a number into a string variable or a string into a numeric variable,
 an error will occur.
 
-@node RESTORE, , READ, Working With Data
+@node RESTORE, Input and Output, READ, Working With Data
 @subsection @code{RESTORE}
 @stindex @code{RESTORE}
 
-The @code{RESTORE} statement may be used to reset @sc{Basic}'s
+The @code{RESTORE} statement may be used to reset @sc{basic}'s
 internal data pointer back to the first @code{DATA} statement in a
 program.  You can also provide a line number to this statement which
 will set the data pointer to the next @code{DATA} statement on or
@@ -863,9 +886,404 @@ after the given line.
 @end example
 @end cartouche
 
-@c To Do: document the commands BYE, CONTINUE, DEF, ELSE, END, FOR,
-@c        GOSUB, GOTO, IF, INPUT, LIST, LOAD, NEW, NEXT, ON, PRINT,
-@c        READ, RETURN, RUN, SAVE, STOP
+@node Input and Output, Flow Control, Working with Data, Statements
+@section Input and Output
+
+@node PRINT, INPUT, Input and Output, Input and Output
+@subsection @code{PRINT}
+@cindex output
+@cindex printing messages
+@stindex @code{PRINT}
+
+The @code{PRINT} statement is how a @sc{basic} program informs a user
+about what it's doing or the results of the program.  In its simplest
+form, @code{PRINT} with no data just outputs a blank line.  To print a
+literal line of text, follow @code{PRINT} with a quoted string
+containing the text you want the program to print.  This is the most
+common beginner program:
+
+@cartouche
+@example
+10 PRINT "Hello, world!"
+@end example
+@end cartouche
+
+A more useful case is to have the program print the value of a
+variable that has been calculated.  Just follow @code{PRINT} with the
+name of the variable to display.
+
+@cartouche
+@example
+20 LET ROOT2=SQR(2)
+30 PRINT ROOT2
+@end example
+@end cartouche
+
+To make it clearer what data is being shown, you can combine literal
+strings with variables.  Separate the strings and variables with a
+semicolon to have them printed adjacent to each other.
+
+@cartouche
+@example
+30 PRINT "The square root of 2 is "; ROOT2
+@end example
+@end cartouche
+
+If you end the @code{PRINT} statement with a semicolon, @sc{basic}
+will not start a new line at the end; another @code{PRINT} statement
+later in the program will continue printing on that same line.
+Remember to add a space at the end of a string if it will be followed
+by a variable value, otherwise they will be mashed together like
+``@dots is1.41421'' instead of ``@dots is 1.41421''.
+
+You can space items out in the output at tab stops by separating them
+with a comma instead of a semicolon.  The comma causes the output to
+advance to the next tab stop, which by convention is at the next
+multiple of 8 spaces from the start of a line.
+
+@cartouche
+@example
+PRINT "The first prime numbers are", 2, 3, 5, 7
+@end example
+@end cartouche
+
+The output from the above statement will look like:
+
+@cartouche
+@example
+The first prime numbers are     2       3       5       7
+@end example
+@end cartouche
+
+Ending a @code{PRINT} statement with a comma will advance to the next
+tab stop and, like the semicolon, leave the cursor there for the next
+@code{PRINT} instead of advancing to the next line.
+
+@node INPUT, Flow Control, PRINT, Input and Output
+@subsection @code{INPUT}
+@cindex input
+@cindex reading user data
+@stindex @code{INPUT}
+
+The @code{INPUT} statement lets the program get data or text from the
+user.  This statement must be followed by the name of a variable in
+which to store the user's data.  It can either get numeric or string
+data.
+
+@cartouche
+@example
+40 INPUT X
+@end example
+@end cartouche
+
+@sc{Basic} will display a ``? '' prompt to let the user know it's
+waiting for input.  To make it clear to the user what the program is
+asking for, you can either precede the @code{INPUT} statement with a
+@code{PRINT} statement (ending the @code{PRINT} with a semicolon if
+you want the ``? '' and user input to appear on the same line) or for
+convenience you can lead the @code{INPUT} statement itself with a
+literal string and a semicolon before the variable to use.
+
+@cartouche
+@example
+40 INPUT "How many apples do you have"; X
+@end example
+@end cartouche
+
+@code{INPUT} can read multiple variables in the same statement.
+Separate the variables with a comma.  For each variable, @sc{basic}
+will prompt the user with a ``? '' and read the next line of input.
+
+@cartouche
+@example
+50 PRINT "Please enter your first, middle, and last name"
+60 INPUT FIRST$, MIDDLE$, LAST$
+70 REM Build the message incrementally
+80 LET MESSAGE$="Hello " + FIRST$
+90 MESSAGE$=MESSAGE$ + ", also called " + MIDDLE$
+100 MESSAGE$=MESSAGE$ + ", of the " + LAST$ + " family!"
+110 PRINT MESSAGE$
+@end example
+@end cartouche
+
+@node Flow Control, Program Management, Input and Output, Statements
+@section Flow Control
+@cindex flow control
+
+@node GOTO, END, Flow Control, Flow Control
+@subsection @code{GOTO}
+@cindex jump to another line
+@cindex unconditional branch
+@stindex @code{GOTO}
+
+Normally @sc{basic} executes each line of a program in sequential
+order, and after running the last line of the program, it stops.  This
+order can be changed by using the @code{GOTO} statement to tell
+@sc{basic} which line of the program to execute next.  A typical case
+is to have the program repeat the same code continually.
+
+@cartouche
+@example
+10 LET COUNT=1
+20 PRINT COUNT,"Hello, world!"
+30 COUNT=COUNT+1
+40 GOTO 20
+@end example
+@end cartouche
+
+A program like the above will run forever unless the user interrupts
+it by typing Ctrl-@kbd{C}.  Another use for @code{GOTO} is to skip
+over a section of code.
+
+@cartouche
+@example
+10 PRINT "One upon a time,"
+15 GOTO 990
+20 PRINT "there was a beautiful princess."
+30 INPUT "What is your name"; NAME$
+40 PRINT "Amazingly, the princess was also named "; NAME$
+50 PRINT "In the kingdom of ..."
+REM more story lines here
+990 PRINT "And they lived happily ever after."
+@end example
+@end cartouche
+
+The program above will skip from the opening phrase right to the end
+without doing anything in the middle.
+
+@code{GOTO} statements should only be used sparingly, since if a
+program is large and the flow is complex they can create what is known
+as ``spaghetti code'' where a developer can't follow what the program
+is supposed to be doing, and in many cases in can break the flow of
+other control statements.
+
+@node END, GOSUB and RETURN, GOTO, Flow Control
+@subsection @code{END}
+@cindex stopping
+@stindex @code{END}
+
+The @code{END} statement simply tells @sc{basic} to stop running the
+program.
+
+@cartouche
+@example
+10 INPUT "What is your name"; NAME$
+17 END
+20 PRINT "Hello, "; NAME$
+@end example
+@end cartouche
+
+The above example will take the user's input but never says ``Hello''.
+
+@node GOSUB and RETURN, STOP and CONTINUE, GOTO and END, Flow Control
+@subsection Subroutines: @code{GOSUB} and @code{RETURN}
+@cindex jump with return
+@cindex subroutines
+@stindex @code{GOSUB}
+@stindex @code{RETURN}
+
+@sc{Basic} can switch to another section of a program on a temporary
+basis and remember where it left so that it can come back and continue
+from there.  The @code{GOSUB} statement works similarly to the
+@code{GOTO} statement, except it leaves a bookmark of where it left so
+that it can @code{RETURN} there later.  This is very useful when you
+have a section of code that can be re-used in several places within
+your program.
+
+The subroutine should end with a @code{RETURN} statement, which tells
+@sc{basic} to go back to the next statement after the @code{GOTO}
+which sent it there.
+
+@cartouche
+@example
+10 INPUT "Enter the first value"; A
+20 GOSUB 100
+30 INPUT "Enter the second value"; A
+40 GOSUB 100
+50 INPUT "Enter the third value"; A
+60 GOSUB 100
+90 END
+100 REM This subroutine computes functions of A
+110 B=A*A
+120 C=A*B
+130 D=B*C
+140 PRINT A; " squared is "; B
+150 PRINT A; " cubed is "; C
+160 PRINT "The fifth power of "; A; " is "; D
+170 RETURN
+@end example
+@end cartouche
+
+@node STOP and CONTINUE, IF, GOSUB and RETURN, Flow Control
+@subsection Temporary pause: @code{STOP} and @code{CONTINUE}
+@cindex stopping
+@stindex @code{CONTINUE}
+@stindex @code{STOP}
+
+The @code{STOP} statement @emph{temporarily} stops running a program,
+returning to the ``READY'' prompt.  @sc{Basic} remembers where it left
+off.
+
+After a program has stopped in this way, the @code{CONTINUE} statement
+resumes running the program from the next statement.  If the program
+was finished (either by reaching the end of the program or using the
+@code{END} statement), @code{CONTINUE} does nothing.
+
+@node IF, ELSE, STOP and CONTINUE, Flow Control
+@subsection Conditional code: @code{IF}
+@cindex conditional execution
+@stindex @code{IF}
+
+Frequently a program will need to choose to do different things
+depending on the values of its variables.  The @code{IF} statement
+evaluates an expression --- typically a comparison --- and either
+executes the statement following @code{THEN} if the result is true
+(i.e. has a non-zero value) or skips that statement if the result is
+false (i.e. zero).  There are two forms of this statement.
+
+@cartouche
+@example
+120 IF X > 10 THEN 150
+130 PRINT X;" is less than 10"
+140 GOTO 160
+150 PRINT X;" is greater than or equal to 10"
+160 REM Both branches join here
+@end example
+@end cartouche
+
+When @code{THEN} is followed by a line number, the program goes to
+that line if the expression is true; otherwise it continues to the
+next line.  This is an implied @code{GOTO}.
+
+@cartouche
+@example
+200 IF Y < 10 THEN PRINT Y;" is less than 10"
+210 IF Y > 10 THEN PRINT Y;" is greater than 10"
+@end example
+@end cartouche
+
+When @code{THEN} is followed by another statement, the program
+executes the rest of the line if the expression is true; otherwise it
+skips that line and continues to the next line.  You may have multiple
+statements after @code{THEN}; @sc{basic} will skip all of them if the
+expression is false, with the exception of an @code{ELSE} clause.
+
+@node ELSE, FOR and NEXT, IF, Flow Control
+@subsection @code{ELSE}
+@stindex @code{ELSE}
+
+@code{ELSE} is used following an @code{IF} @var{expression}
+@code{THEN} @var{statement} to have @sc{basic} run an alternative
+statement if the expression is false (zero).  The clause looks like
+this:
+
+@cartouche
+@example
+10 IF A < 0 THEN END:ELSE PRINT "Still going..."
+@end example
+@end cartouche
+
+@node FOR and NEXT, , ELSE, Flow Control
+@subsection Looping with @code{FOR} and @code{NEXT}
+@cindex loops
+@stindex @code{FOR}
+@stindex @code{NEXT}
+@stindex @code{STEP}
+
+A section of code can be repeated a specified number of times by
+enclosing it in a @code{FOR}@dots @code{NEXT} loop.  The @code{FOR}
+statement tells @sc{basic} what variable to use for counting the
+number of times the loop runs; it sets the given variable to the
+initial value and then continues with the following statements until
+reaching the @code{NEXT} statement for the same variable.  Then it
+adds 1 to the variable's value and checks whether it has passed the
+@code{TO} value; if not, @sc{basic} goes back to the statement
+following @code{FOR}.
+
+@cartouche
+@example
+10 FOR A=1 TO 5
+20 READ STR$
+30 PRINT A;". ";STR$
+40 NEXT A
+50 DATA "Pink hearts","Yellow moons"
+51 DATA "Orange stars","Green clovers"
+52 DATA "Blue diamonds"
+@end example
+@end cartouche
+
+The above example will print 5 numbered lines, each showing the next
+string from the data.
+
+You can change the amount and/or direction by which the variable
+increments each time through the loop by adding a @code{STEP} to the
+@code{FOR} statement.  Then @sc{basic} will add the @code{STEP} amount
+to the variable each time it reaches @code{NEXT}.  For example, the
+following code will count backwards:
+
+@cartouche
+@example
+10 FOR N=100 TO 1 STEP -1
+20 PRINT N;
+30 IF N>1 THEN PRINT ", ";
+40 T=N/10:T=T-INT(T)
+50 IF T=0.1 THEN PRINT
+60 NEXT N
+@end example
+@end cartouche
+
+And the next example will show multiples of @math{\pi}:
+
+@cartouche
+@example
+10 FOR P=0 TO 32 STEP 3.14159
+20 PRINT P
+30 NEXT P
+@end example
+@end cartouche
+
+@code{FOR} loops can be nested if you use different variables.
+
+@cartouche
+@example
+10 DIM M(10,10)
+20 FOR I=1 TO 10
+30 FOR J=1 TO 10
+40 IF I=J THEN M(I,J)=1:ELSE M(I,J)=0
+50 NEXT J
+60 NEXT I
+@end example
+@end cartouche
+
+@node Program Management, Index, Flow Control, Statements
+@section Program Management
+
+@node LIST, SAVE, Program Management, Program Management
+@subsection Listing Your Program
+@stindex @code{LIST}
+
+@c To Do..
+
+@node SAVE, NEW, LIST, Program Management
+@subsection Saving Your Program
+@cindex storing programs
+@stindex @code{SAVE}
+
+@c To Do..
+
+@node NEW, LOAD, SAVE, Program Management
+@stindex @code{NEW}
+
+@c To Do..
+
+@node LOAD, Index, NEW, Program Management
+@stindex @code{LOAD}
+
+@c To Do..
+
+
+@c To Do: document the commands DEF,
+@c        LIST, LOAD, NEW, ON, SAVE
 
 @node Index, Index of Statements, , Top
 @unnumbered Index

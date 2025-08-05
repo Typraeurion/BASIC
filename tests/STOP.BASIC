@@ -1,0 +1,7 @@
+10 PRINT "The program should stop here.  Enter 'CONTINUE' to see the rest."
+20 STOP
+30 PRINT "This is the rest of the program."
+40 END
+50 PRINT "There is nothing to see here."
+
+RUN

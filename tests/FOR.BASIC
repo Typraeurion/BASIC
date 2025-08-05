@@ -1,0 +1,36 @@
+10 REM We need to test several arrangements of the FOR / NEXT statements.
+11 REM Start with a simple one-liner, default step
+20 FOR X=1 TO 10:PRINT X:NEXT X
+25 PRINT:REM Spacer
+30 REM Next add a step
+40 FOR X=1 to 15 STEP 2.5:PRINT X:NEXT X
+45 PRINT:REM Spacer
+50 REM Now start putting NEXT on a different line
+60 FOR X=1 TO 5
+70 PRINT X
+80 NEXT X
+85 PRINT:REM Spacer
+90 REM Backwards!
+100 FOR X=100 TO 90 STEP -1
+110 PRINT X
+120 NEXT X
+125 PRINT:REM Spacer
+130 REM Try nesting two FOR loops
+140 FOR Y=1 TO 5
+150 FOR X=1 TO 5
+160 PRINT "(";X;",";Y;")",
+170 NEXT X
+180 PRINT:REM End of the current line
+190 NEXT Y
+195 PRINT:REM Spacer
+200 REM Try skipping the inner loop
+210 FOR Y=1 TO 5
+220 FOR X=1 TO 5
+230 PRINT "(";X;",";Y;")",
+240 IF X>2 THEN 260
+250 NEXT X
+260 PRINT:REM End of the current line
+270 NEXT Y
+275 PRINT:REM Spacer
+
+RUN

@@ -132,7 +132,10 @@ get_indices (struct list_header *index_list, unsigned short *indices,
   if (nargs != index_list->num_items)
     {
       /* We don't give this error for DIM, since DIM defines the dimensions */
-      printf ("ERROR - WRONG NUMBER OF INDICES ON LINE %d", current_line);
+      if (current_line == (unsigned long) -1)
+	printf ("ERROR - WRONG NUMBER OF INDICES");
+      else
+	printf ("ERROR - WRONG NUMBER OF INDICES ON LINE %d", current_line);
       executing = 0;
       return -1;
     }
@@ -143,8 +146,11 @@ get_indices (struct list_header *index_list, unsigned short *indices,
       /* Is this a valid index? */
       if (*tp == STREXPR)
 	{
-	  printf ("ERROR - ARGUMENT %d IS WRONG TYPE ON LINE %d",
-		  i + 1, current_line);
+	  if (current_line == (unsigned long) -1)
+	    printf ("ERROR - INDEX #%d IS NOT A NUMBER", i + 1);
+	  else
+	    printf ("ERROR - INDEX #%d IS NOT A NUMBER ON LINE %d",
+		    i + 1, current_line);
 	  executing = 0;
 	  return -1;
 	}
@@ -158,10 +164,15 @@ get_indices (struct list_header *index_list, unsigned short *indices,
       /* Is this a valid index? */
       if ((d < 0.0) || (d > (double) UINT_MAX))
 	{
-	  printf ((dim_or_index == DIM)
-		  ? "ERROR - DIMENSION %d OUT OF RANGE ON LINE %d"
-		  : "ERROR - INDEX %d OUT OF RANGE ON LINE %d",
-		  i + 1, current_line);
+	  if (current_line == (unsigned long) -1)
+	    printf ((dim_or_index == DIM)
+		    ? "ERROR - DIMENSION #%d OUT OF RANGE"
+		    : "ERROR - INDEX #%d OUT OF RANGE", i + 1);
+	  else
+	    printf ((dim_or_index == DIM)
+		    ? "ERROR - DIMENSION #%d OUT OF RANGE ON LINE %d"
+		    : "ERROR - INDEX #%d OUT OF RANGE ON LINE %d",
+		    i + 1, current_line);
 	  executing = 0;
 	  return -1;
 	}
@@ -330,7 +341,11 @@ array_lookup (struct fndef *array, unsigned short *index_list)
     {
       if (index_list[i] > array->array_dimension[i])
 	{
-	  printf ("ERROR - INDEX OUT OF RANGE ON LINE %d", current_line);
+	  if (current_line == (unsigned long) -1)
+	    printf ("ERROR - INDEX #%d OUT OF RANGE", i + 1);
+	  else
+	    printf ("ERROR - INDEX #%d OUT OF RANGE ON LINE %d",
+		    i + 1, current_line);
 	  executing = 0;
 	  return -1;
 	}

@@ -1,0 +1,3 @@
+INPUT "Enter any string of text";S$
+REM The problem with testing INPUT using a test file is that the program parser gets in the way and consumes the input before BASIC has a chance to read it.
+PRINT "The string that I read was: ";CHR$(34);S$;CHR$(34)

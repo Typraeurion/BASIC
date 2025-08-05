@@ -1,0 +1,34 @@
+DIM E$(2)
+REM For this test, don't use FOR loops
+REM because we can't be certain that is working yet.
+E$(1)="m"
+E$(2)="c"
+REM We need to use PRINT to verify the assignments
+PRINT "E=";E$(1);E$(2);"^2"
+
+REM Test an uninitialized string element along with zero-base
+PRINT "E[0]=";CHR$(34);E$(0);CHR$(34)
+
+PRINT "The following should be an index out of range error (too small)"
+PRINT "E[-1]=";CHR$(34);E$(-1);CHR$(34)
+
+PRINT "The following should be an index out of range error (too large)"
+PRINT "E[3]=";CHR$(34);E$(3);CHR$(34)
+
+PRINT "The following should be a wrong number of indices error"
+PRINT "E[1,2]=";CHR$(34);E$(1,2);CHR$(34)
+
+REM Try a 3x3 numeric matrix
+DIM M(3,3)
+M(0,0)=1
+M(1,1)=1
+M(2,2)=1
+LET R0=M(0,0)+M(1,0)+M(2,0)
+LET R1=M(0,1)+M(1,1)+M(2,1)
+LET R2=M(0,2)+M(1,2)+M(2,2)
+PRINT "The sum of row 0 is ";R0
+PRINT "The sum of row 1 is ";R1
+PRINT "The sum of row 2 is ";R2
+
+PRINT "The following should be a wrong number of indices error"
+PRINT "M[0]=";M(0)

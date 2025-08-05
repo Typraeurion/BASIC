@@ -1,0 +1,19 @@
+REM This tests reading data from DATA.BASIC;
+REM that program needs to be loaded first.
+
+READ F0
+READ F1,F2
+READ F3,F4,F5
+READ F6,F7,F8,F9
+READ F10,F11,F12,F13
+READ F14,F15,F16,F17,F18,F19,F20
+
+PRINT "The 18th number is ";F18
+
+The next data in the file should be a string
+READ O1$
+READ O2$,O3$
+READ O4$,O5$,O6$
+READ O7$,O8$,O9$,O10$
+
+PRINT "The 9th string is ";CHR$(34);O9$;CHR$(34)
