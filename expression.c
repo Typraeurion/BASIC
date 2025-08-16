@@ -7,8 +7,6 @@
 #include "tables.h"
 #include "basic.tab.h"
 
-/* DEBUG */ extern int tracing;
-
 
 /* Evaluate a numeric operand.  Return the result.
  * The token pointer is advanced to the next token after the operand. */
@@ -362,15 +360,20 @@ cmd_let (struct statement_header *stmt)
       ++tp;
       i = *tp++;
       numptr = &variable_values[i].num;
-      if (tracing & 2)
+      // FIXME: Should be printed to a string for later output,
+      // since we may have to print the results of
+      // additional evaluations along the way.
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "%s", name_table[i]->contents);
       /* If this is an array, we need to do more work */
       if (*tp == '(')
 	{
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc ('(', stderr);
-	      tracing |= 4;
+	      // FIXME: Why did the code temporarily set this trace bit?
+	      // (It tells get_indices to display the evaluated indices)
+	      // tracing |= 4;
 	    }
 	  if (*(++tp) != ITEMLIST)
 	    {
@@ -388,10 +391,11 @@ cmd_let (struct statement_header *stmt)
 	  tp = (unsigned short *) &((char *) tp)
 	    [((struct list_header *) tp)->length];
 	  ++tp;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc (')', stderr);
-	      tracing &= ~4;
+	      // FIXME
+	      // tracing &= ~4;
 	    }
 	}
 
@@ -400,7 +404,7 @@ cmd_let (struct statement_header *stmt)
 
       /* Assign the result of the next expression */
       *numptr = eval_number (&tp);
-      if (tracing & 2)
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "=%g\n", *numptr);
       return;
 
@@ -409,15 +413,17 @@ cmd_let (struct statement_header *stmt)
       ++tp;
       i = *tp++;
       strptr = &variable_values[i].str;
-      if (tracing & 2)
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "%s", name_table[i]->contents);
       /* If this is an array, we need to do more work */
       if (*tp == '(')
 	{
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc ('(', stderr);
-	      tracing |= 4;
+	      // FIXME: Why did the code temporarily set this trace bit?
+	      // (It tells get_indices to display the evaluated indices)
+	      // tracing |= 4;
 	    }
 	  if (*(++tp) != ITEMLIST)
 	    {
@@ -435,10 +441,11 @@ cmd_let (struct statement_header *stmt)
 	  tp = (unsigned short *) &((char *) tp)
 	    [((struct list_header *) tp)->length];
 	  ++tp;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc (')', stderr);
-	      tracing &= ~4;
+	      // FIXME
+	      // tracing &= ~4;
 	    }
 	}
 
@@ -452,7 +459,7 @@ cmd_let (struct statement_header *stmt)
       /* Now we can free the original string, and save the new. */
       free (*strptr);
       *strptr = newstr;
-      if (tracing & 2)
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "=\"%s\"\n", newstr->contents);
       return;
 

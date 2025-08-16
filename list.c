@@ -32,19 +32,24 @@ const struct {
   { DEF, "DEF " },
   { DIM, "DIM " },
   { ELSE, "ELSE " },
+  { EXPRESSIONS, "EXPRESSIONS " },
   { END, "END" },
   { FOR, "FOR " },
   { GOSUB, "GOSUB " },
   { GOTO, "GOTO " },
+  { GRAMMAR, "GRAMMAR " },
   { IF, "IF " },
   { INPUT, "INPUT " },
   { LET, "LET " },
   { _LET_, "" },	/* Implied `LET' */
+  { LINES, "LINES " },
   { LIST, "LIST " },
   { LOAD, "LOAD " },
   { NEW, "NEW" },
   { NEXT, "NEXT " },
+  { OFF, "OFF" },
   { ON, "ON " },
+  { PARSER, "PARSER " },
   { PRINT, "PRINT " },
   { READ, "READ " },
   { REM, "REM " },
@@ -52,10 +57,12 @@ const struct {
   { RETURN, "RETURN" },
   { RUN, "RUN" },
   { SAVE, "SAVE " },
+  { STATEMENTS, "STATEMENTS " },
   { STEP, " STEP " },
   { STOP, "STOP" },
   { THEN, " THEN " },
   { TO, " TO " },
+  { TRACE, "TRACE " },
   /* Arithmetic operators */
   { OR, " OR " },
   { AND, " AND " },
@@ -374,9 +381,8 @@ cmd_load (struct statement_header *stmt)
       return;
     }
 
-#ifdef DEBUG
-  fprintf (stderr, "Switching parser input to %s\n", filename);
-#endif
+  if (tracing & (TRACE_PARSER | TRACE_STATEMENTS))
+    fprintf (stderr, "Switching parser input to %s\n", filename);
 
   yypush_buffer_state(yy_create_buffer(load_file, YY_BUF_SIZE));
   current_load_nesting++;
@@ -404,17 +410,15 @@ cmd_save (struct statement_header *stmt)
       return;
     }
 
-#ifdef DEBUG
-  fprintf (stderr, "Saving program to %s\n", filename);
-#endif
+  if (tracing & TRACE_STATEMENTS)
+    fprintf (stderr, "Saving program to %s\n", filename);
   for (lp = find_line (0, 1); lp != NULL;
        lp = find_line (lp->line_number + 1, 1))
     list_line (lp, save_file);
 
   fclose (save_file);
-#ifdef DEBUG
-  fprintf (stderr, "Finished saving %s\n", filename);
-#endif
+  if (tracing & TRACE_STATEMENTS)
+    fprintf (stderr, "Finished saving %s\n", filename);
 }
 
 void

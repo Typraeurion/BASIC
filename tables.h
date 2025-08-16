@@ -91,6 +91,15 @@ extern unsigned long current_data_line;
 extern unsigned short current_statement;
 extern unsigned short current_data_statement;
 extern unsigned short current_data_item;
+extern int tracing;
+
+/* Trace flags (bits); the first three are for BASIC language level tracing */
+#define TRACE_LINES 1
+#define TRACE_STATEMENTS 2
+#define TRACE_EXPRESSIONS 4
+/* These next two flags are for interpreter (bison/flex) tracing */
+#define TRACE_GRAMMAR 8
+#define TRACE_PARSER 16
 
 
 /* Functions used in implementing the BASIC interpreter: */
@@ -111,6 +120,8 @@ struct statement_header *find_statement (struct line_header *line,
 void add_line (struct line_header *line);
 /* List a line from a program */
 void list_line (struct line_header *lp, FILE *to);
+/* List a program statement */
+void list_statement (struct statement_header *sp, FILE *to);
 /* List a token from a program statement */
 int list_token (unsigned short *tp, FILE *to);
 void remove_line (unsigned long number);
@@ -151,6 +162,7 @@ void cmd_return (struct statement_header *);
 void cmd_run (struct statement_header *);
 void cmd_save (struct statement_header *);
 void cmd_stop (struct statement_header *);
+void cmd_trace (struct statement_header *);
 
 
 /* DEBUG */

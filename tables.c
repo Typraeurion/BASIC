@@ -8,7 +8,6 @@
 
 
 /* Global data */
-/* DEBUG */ extern int tracing;
 
 /* The variable name table. */
 int name_table_size = 0;	/* Number of names defined	*/
@@ -155,7 +154,7 @@ get_indices (struct list_header *index_list, unsigned short *indices,
 	  return -1;
 	}
       d = eval_number (&tp);
-      if (tracing & 4)
+      if (tracing & TRACE_EXPRESSIONS) // FIXME: Changed from 4 (set by cmd_let)
 	{
 	  fprintf (stderr, "%g", d);
 	  if (i < nargs - 1)
@@ -563,7 +562,6 @@ cmd_dim (struct statement_header *stmt)
     }
 }
 
-/* #ifdef DEBUG */
 /* DEBUG: Dump the current program's data structures */
 void
 dump (void)
@@ -614,4 +612,3 @@ dump (void)
 
   printf ("End of list\n\n");
 }
-/* #endif */

@@ -36,18 +36,23 @@ static void dump_tokens (unsigned short *);
 %token DIM
 %token ELSE
 %token END
+%token EXPRESSIONS
 %token FOR
 %token GOSUB
 %token GOTO
+%token GRAMMAR
 %token IF
 %token INPUT
 %token LET
 %token _LET_	/* Implied `LET' */
+%token LINES
 %token LIST
 %token LOAD
 %token NEW
 %token NEXT
+%token OFF
 %token ON
+%token PARSER
 %token PRINT
 %token READ
 %token REM
@@ -56,10 +61,12 @@ static void dump_tokens (unsigned short *);
 %token RETURN
 %token RUN
 %token SAVE
+%token STATEMENTS
 %token STEP
 %token STOP
 %token THEN
 %token TO
+%token TRACE
 /* Arithmetic operators */
 %left OR
 %left AND
@@ -98,26 +105,23 @@ line: '\n'              /* Do nothing */
 	  $<tokens>$ = add_tokens ("*t", $<tokens>2, '\n');
 	  /* Change the line number */
 	  $<token_line>$->line_number = $<integer>1;
-#ifdef DEBUG
-	  fprintf (stderr, "Adding line %d to program\n", $<integer>1);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Adding line %d to program\n", $<integer>1);
 	  add_line ($<token_line>$);
 	  /* DO NOT delete this line, since it is now part of the program. */
 	}
     | INTEGER '\n'      /* Delete a line in the BASIC program */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Deleting line %d from program\n", $<integer>1);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Deleting line %d from program\n", $<integer>1);
 	  remove_line ($<integer>1);
 	}
     | lineofcode '\n'   /* Execute a line of code immediately */
 	{
 	  /* Complete the line of code with a newline */
 	  $<tokens>$ = add_tokens ("*t", $<tokens>1, '\n');
-#ifdef DEBUG
-	  fprintf (stderr, "Executing line of BASIC code\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Executing line of BASIC code\n");
 	  /* Execute this line */
 	  execute ($<token_line>$);
 	  /* We're done with this line, so free the token array */
@@ -128,9 +132,8 @@ line: '\n'              /* Do nothing */
 
 lineofcode: statement	/* Create a new line */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Create a new line from the first statement\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Create a new line from the first statement\n");
 	  /* ELSE and IF statements need to be handled specially,
 	   * because they actually contain two statements
 	   * preceded with a dummy statement. */
@@ -160,9 +163,8 @@ lineofcode: statement	/* Create a new line */
 	   * Append a colon to complete the previous statement.
 	   * Save the length of the new statement +1, as its
 	   * end-of-statement marker will be included later. */
-#ifdef DEBUG
-	  fprintf (stderr, "Added another statement to the line\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Added another statement to the line\n");
 	  /* ELSE and IF statements need to be handled specially,
 	   * because they actually contain two statements
 	   * preceded with a dummy statement. */
@@ -195,67 +197,59 @@ statement: assignment
 	{
 	  int len;
 
-#ifdef DEBUG
-	  fprintf (stderr, "Assign a value to a variable\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Assign a value to a variable\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", _LET_, $<tokens>1);
 	}
     | BYE		/* Bye-bye */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Bye-bye\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Bye-bye\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", BYE);
 	}
     | CONTINUE          /* Continue program execution from last `STOP' */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Continue program from where we left off\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Continue program from where we left off\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", CONTINUE);
 	}
     | DATA datalist     /* Define data to be read with `READ' */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Data list defined\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Data list defined\n");
 	  /* Convert the data token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", DATA, $<tokens>2);
 	}
     | DEF numfuncdecl '=' numexpression /* Define a numeric function */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Numeric function defined\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Numeric function defined\n");
 	  /* convert the expression token lists into a statement */
 	  $<tokens>$ = add_tokens ("tt*tt#", DEF, NUMLVAL, $<tokens>2,
 				   '=', NUMEXPR, $<tokens>4);
 	}
     | DEF strfuncdecl '=' stringexpression /* Define a string function */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "String function defined\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "String function defined\n");
 	  /* convert the expression token lists into a statement */
 	  $<tokens>$ = add_tokens ("tt*tt#", DEF, STRLVAL, $<tokens>2,
 				   '=', STREXPR, $<tokens>4);
 	}
     | DIM dimlist       /* Define the size of array variables */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Array variable defined\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Array variable defined\n");
 	  /* Convert the variable token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", DIM, $<tokens>2);
 	}
     | ELSE statement    /* Execute here iff previous `IF' expr was false */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Execute this statement iff the previous IF result was false\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Execute this statement iff the previous IF result was false\n");
 	  /* Extend the current statement to precede it with `ELSE'.
 	   * Since we need to keep `ELSE' separate from the following
 	   * statement, precede this with a dummy statement. */
@@ -265,18 +259,16 @@ statement: assignment
 	}
     | END               /* Stop program execution */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "End the program's execution\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "End the program's execution\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", END);
 	}
     | FOR simplenumvar '=' arithexpr TO arithexpr
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Begin an iteration of the following statements up to NEXT\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Begin an iteration of the following statements up to NEXT\n");
 	  /* Condense all token lists into one statement */
 	  $<tokens>$ = add_tokens ("tt*tt#tt#", FOR, NUMLVAL, $<tokens>2,
 				   '=', NUMEXPR, $<tokens>4, TO, NUMEXPR,
@@ -284,10 +276,9 @@ statement: assignment
 	}
     | FOR simplenumvar '=' arithexpr TO arithexpr STEP arithexpr
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Begin an iteration using an alternative increment\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Begin an iteration using an alternative increment\n");
 	  /* Condense all token lists into one statement */
 	  $<tokens>$ = add_tokens ("tt*tt#tt#tt#", FOR, NUMLVAL, $<tokens>2,
 				   '=', NUMEXPR, $<tokens>4, TO, NUMEXPR,
@@ -295,35 +286,31 @@ statement: assignment
 	}
     | GOSUB arithexpr   /* Save the current position, then transfer */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Go to a subroutine\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Go to a subroutine\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", GOSUB, $<tokens>2);
 	}
     | GOTO arithexpr    /* Transfer control to a different line */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Go to another line in the program\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Go to another line in the program\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", GOTO, $<tokens>2);
 	}
     | IF numexpression THEN INTEGER /* `GOTO' a line if expression is true */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Go to another line if this expression is true\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Go to another line if this expression is true\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*tti", IF, $<tokens>2, THEN,
 				   INTEGER, $<integer>4);
 	}
     | IF numexpression THEN statement /* Continue execution if expr is true */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Execute the next statement if this expression is true\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Execute the next statement if this expression is true\n");
 	  /* Convert the expression into a statement. */
 	  $<tokens>$ = add_tokens ("t*t", IF, $<tokens>2, THEN);
 	  /* Attach the following statement.
@@ -335,199 +322,182 @@ statement: assignment
 	}
     | INPUT varlist /* Read a value from the terminal and store in vars */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Read a value from the user\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Read a value from the user\n");
 	  /* Convert the variable token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", INPUT, $<tokens>2);
 	}
     | INPUT STRING ';' varlist /* Print a prompt, then read a value to vars */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Print a prompt %s and read a value from the user\n",
-		   $<string>2->contents);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Print a prompt %s and read a value from the user\n",
+		     $<string>2->contents);
 	  /* Convert the variable list into a statement */
 	  $<tokens>$ = add_tokens ("ttst*", INPUT, STRING, $<string>2,
 				   ';', $<tokens>4);
 	}
     | LET assignment    /* Assign a value to a variable */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Assign a value to a variable\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Assign a value to a variable\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", LET, $<tokens>2);
 	}
     | LIST              /* Display the entire program */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "List the entire program\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "List the entire program\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", LIST);
 	}
     | LIST INTEGER      /* Display one line of the program */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "List line %d of the program\n", $<integer>2);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "List line %d of the program\n", $<integer>2);
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("tti", LIST, INTEGER, $<integer>2);
 	}
     | LIST INTEGER ',' INTEGER /* Display a range of lines of the program */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "List a portion of the program from line %d to line %d\n",
-		   $<integer>2, $<integer>4);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "List a portion of the program from line %d to line %d\n",
+		     $<integer>2, $<integer>4);
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("ttitti", LIST, INTEGER, $<integer>2,
 				   ',', INTEGER, $<integer>4);
 	}
     | LOAD STRING       /* Read input from a file */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Read a program from file %s\n",
-		   $<string>2->contents);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Read a program from file %s\n",
+		     $<string>2->contents);
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("tts", LOAD, STRING, $<string>2);
 	}
     | NEW               /* Erase the current program from memory */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Erase the program and start over\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Erase the program and start over\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", NEW);
 	}
     | NEXT simplenumvar /* Step a variable; transfer control to `FOR' */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Do the next iteration of the statement following FOR\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Do the next iteration of the statement following FOR\n");
 	  /* Convert the variable token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", NEXT, $<tokens>2);
 	}
     | ON numvariable GOSUB linelist /* `GOSUB' the Nth line in the list */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Compute the line to go subroutine\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Compute the line to go subroutine\n");
 	  /* Make a statement out of the existing tokens */
 	  $<tokens>$ = add_tokens ("t*t#", ON, $<tokens>2, GOSUB, $<tokens>4);
 	}
     | ON numvariable GOTO linelist /* `GOTO' the Nth line in the list */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Compute the line to go to\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Compute the line to go to\n");
 	  /* Make a statement out of the existing tokens */
 	  $<tokens>$ = add_tokens ("t*t#", ON, $<tokens>2, GOTO, $<tokens>4);
 	}
     | PRINT             /* Print a blank line */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Skip a line of output\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Skip a line of output\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", PRINT);
 	}
     | PRINT printlist   /* Print something */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Print a line\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Print a line\n");
 	  /* Make a statement out of the list */
 	  $<tokens>$ = add_tokens ("t*", PRINT, $<tokens>2);
 	}
     | PRINT printlist ';' /* Print something, but don't follow with NL */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Print a line and stay at the line's end\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Print a line and stay at the line's end\n");
 	  /* Make a statement out of the list */
 	  $<tokens>$ = add_tokens ("t*t", PRINT, $<tokens>2, ';');
 	}
     | PRINT printlist ',' /* Print something, follow with tab instead of NL */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Print a line and tab over a bit from the end\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Print a line and tab over a bit from the end\n");
 	  /* Make a statement out of the list */
 	  $<tokens>$ = add_tokens ("t*t", PRINT, $<tokens>2, ',');
 	}
     | READ varlist  /* Read next item from a `DATA' line, store in var */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Read the next DATA item\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Read the next DATA item\n");
 	  /* Make a statement out of the list */
 	  $<tokens>$ = add_tokens ("t*", READ, $<tokens>2);
 	}
     | REM RESTOFLINE    /* Comment -- store in program, but do nothing */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Remark noted: %s\n", $<string>2->contents);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Remark noted: %s\n", $<string>2->contents);
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("tts", REM, RESTOFLINE, $<string>2);
 	}
     | RESTORE           /* Reset `DATA' pointer to the beginning */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Restore DATA pointer to the beginning of the program\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Restore DATA pointer to the beginning of the program\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", RESTORE);
 	}
     | RESTORE arithexpr /* Reset `DATA' pointer to a given line */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Restore DATA pointer to a specific line in the program\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Restore DATA pointer to a specific line in the program\n");
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", RESTORE, $<tokens>2);
 	}
     | RETURN            /* Transfer control back to previous `GOSUB' */
 	{
-#ifdef DEBUG
-	  fprintf (stderr,
-		   "Return to the statement following the last GOSUB call\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "Return to the statement following the last GOSUB call\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", RETURN);
 	}
     | RUN               /* Reset program counters and execute program */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Run the program from the beginning\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Run the program from the beginning\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", RUN);
 	}
     | SAVE STRING       /* List the entire program to a file */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Write the program listing to file %s\n",
-		   $<string>2->contents);
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Write the program listing to file %s\n",
+		     $<string>2->contents);
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("tts", SAVE, STRING, $<string>2);
 	}
     | STOP              /* Stop program execution temporarily */
 	{
-#ifdef DEBUG
-	  fprintf (stderr, "Stop the program at this point\n");
-#endif
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Stop the program at this point\n");
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", STOP);
+	}
+    | TRACE tracetarget tracestate
+	{
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Tracing\n");
+	  $<tokens>$ = add_tokens ("t##", TRACE, $<tokens>2, $<tokens>3);
 	}
     ;
 
@@ -580,9 +550,8 @@ dimlist: dimdecl
 
 linelist: INTEGER
     {
-#ifdef DEBUG
-      fprintf (stderr, "Line number %u\n", $<integer>1);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Line number %u\n", $<integer>1);
       /* Create a new list */
       $<tokens>$ = add_tokens
 	("ttttti", ITEMLIST, 0, 1,
@@ -593,9 +562,8 @@ linelist: INTEGER
     }
     | linelist ',' INTEGER
     {
-#ifdef DEBUG
-      fprintf (stderr, "Line number %u\n", $<integer>3);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Line number %u\n", $<integer>3);
       /* Extend the list with a new line number */
       $<tokens>$ = add_tokens
 	("*ttti", $<tokens>1, ',',
@@ -715,9 +683,8 @@ printitem: anyexpression
        * but it only makes sense in `PRINT' statements anyway. */
     | TAB '(' numexpression ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Spacing over to tab stop\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Spacing over to tab stop\n");
       /* Enlarge the token list to include `TAB' and both parentheses. */
       $<tokens>$ = add_tokens ("tt*t", TAB, '(', $<tokens>3, ')');
     }
@@ -737,9 +704,8 @@ numexpression: arithexpr | condexpr ;
 
 stringexpression: STRING
     {
-#ifdef DEBUG
-      fprintf (stderr, "String constant %s\n", $<string>1->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "String constant %s\n", $<string>1->contents);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("ts", STRING, $<string>1);
     }
@@ -747,9 +713,8 @@ stringexpression: STRING
     | stringfunction
     | stringexpression '+' stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Concatenate two strings\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Concatenate two strings\n");
       /* Enlarge the first token list to include the second
        * and the plus sign */
       $<tokens>$ = add_tokens ("*t#", $<tokens>1, '+', $<tokens>3);
@@ -766,54 +731,48 @@ arithexpr: number
     | numfunction
     | arithexpr '+' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Adding two numbers; new tokens are ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Adding two numbers; new tokens are ");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("t*t#t", '{', $<tokens>1, '+', $<tokens>3, '}');
     }
     | arithexpr '-' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Subtracting two numbers; new tokens are ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Subtracting two numbers; new tokens are ");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("t*t#t", '{', $<tokens>1, '-', $<tokens>3, '}');
     }
     | arithexpr '*' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Multiplying two numbers; ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Multiplying two numbers; ");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("t*t#t", '{', $<tokens>1, '*', $<tokens>3, '}');
     }
     | arithexpr '/' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Dividing two numbers; ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Dividing two numbers; ");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("t*t#t", '{', $<tokens>1, '/', $<tokens>3, '}');
     }
     | arithexpr '^' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Expenentiating two numbers; ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Expenentiating two numbers; ");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("t*t#t", '{', $<tokens>1, '^', $<tokens>3, '}');
     }
     | '-' arithexpr %prec NEG
     {
-#ifdef DEBUG
-      fprintf (stderr, "Negating a number; ");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Negating a number; ");
       /* Enlarge the token list to include the operator
        * and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens ("tt*t", '{', NEG, $<tokens>2, '}');
@@ -823,9 +782,8 @@ arithexpr: number
 condexpr:
       arithexpr '=' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for equality\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for equality\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -833,9 +791,8 @@ condexpr:
     }
     | arithexpr '<' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for less\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for less\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -843,9 +800,8 @@ condexpr:
     }
     | arithexpr '>' arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for more\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for more\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -853,9 +809,8 @@ condexpr:
     }
     | arithexpr "<=" arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for not more\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for not more\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -863,9 +818,8 @@ condexpr:
     }
     | arithexpr ">=" arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for not less\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for not less\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -873,9 +827,8 @@ condexpr:
     }
     | arithexpr "<>" arithexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two numbers for inequality\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two numbers for inequality\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -883,9 +836,8 @@ condexpr:
     }
     | stringexpression '=' stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings for equality\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings for equality\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -893,9 +845,8 @@ condexpr:
     }
     | stringexpression '<' stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings for before\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings for before\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -903,9 +854,8 @@ condexpr:
     }
     | stringexpression '>' stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings for after\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings for after\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -913,9 +863,8 @@ condexpr:
     }
     | stringexpression "<=" stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings for not after\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings for not after\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -923,9 +872,8 @@ condexpr:
     }
     | stringexpression ">=" stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings not before\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings not before\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -933,9 +881,8 @@ condexpr:
     }
     | stringexpression "<>" stringexpression
     {
-#ifdef DEBUG
-      fprintf (stderr, "Comparing two strings for inequality\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Comparing two strings for inequality\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -943,9 +890,8 @@ condexpr:
     }
     | condexpr AND condexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Make sure both conditions are true\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Make sure both conditions are true\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -953,9 +899,8 @@ condexpr:
     }
     | condexpr OR condexpr
     {
-#ifdef DEBUG
-      fprintf (stderr, "Succeed if either condition is true\n");
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Succeed if either condition is true\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
@@ -965,17 +910,15 @@ condexpr:
 
 number: INTEGER
     {
-#ifdef DEBUG
-      fprintf (stderr, "Integer %u; ", $<integer>1);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Integer %u; ", $<integer>1);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("ti", INTEGER, $<integer>1);
     }
     | FLOATINGPOINT
     {
-#ifdef DEBUG
-      fprintf (stderr, "Floating-point number %G; ", $<floating_point>1);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Floating-point number %G; ", $<floating_point>1);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("tf", FLOATINGPOINT, $<floating_point>1);
     }
@@ -984,9 +927,8 @@ number: INTEGER
 anyconstant: number
     | STRING
     {
-#ifdef DEBUG
-      fprintf (stderr, "String constant %s; ", $<string>1->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "String constant %s; ", $<string>1->contents);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("ts", STRING, $<string>1);
     }
@@ -998,10 +940,9 @@ anyvariable: numvariable | strvariable ;
 numvariable: simplenumvar
     | IDENTIFIER '(' arrayindex ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Numeric array element in %s; ",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Numeric array element in %s; ",
+		 name_table[$<integer>1]->contents);
       /* Enlarge the arrayindex token list to include the identifier
        * and parentheses tokens */
       $<tokens>$ = add_tokens
@@ -1012,10 +953,9 @@ numvariable: simplenumvar
 strvariable: simplestringvar
     | STRINGIDENTIFIER '(' arrayindex ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "String array element in %s; ",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "String array element in %s; ",
+		 name_table[$<integer>1]->contents);
       /* Enlarge the arrayindex token list to include the identifier
        * and parentheses tokens */
       $<tokens>$ = add_tokens
@@ -1027,10 +967,9 @@ simplevar: simplenumvar | simplestringvar ;
 
 simplenumvar: IDENTIFIER
     {
-#ifdef DEBUG
-      fprintf (stderr, "Numeric variable %s; ",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Numeric variable %s; ",
+		 name_table[$<integer>1]->contents);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("tt", IDENTIFIER, $<integer>1);
     }
@@ -1038,10 +977,9 @@ simplenumvar: IDENTIFIER
 
 simplestringvar: STRINGIDENTIFIER
     {
-#ifdef DEBUG
-      fprintf (stderr, "String variable %s; ",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "String variable %s; ",
+		 name_table[$<integer>1]->contents);
       /* Start a new token list */
       $<tokens>$ = add_tokens ("tt", STRINGIDENTIFIER, $<integer>1);
     }
@@ -1076,14 +1014,45 @@ arrayindex: numexpression
     }
     ;
 
+/** Define trace types */
+tracetarget: LINES
+    {
+      $<tokens>$ = add_tokens ("t", LINES);
+    }
+    | STATEMENTS
+    {
+      $<tokens>$ = add_tokens ("t", STATEMENTS);
+    }
+    | EXPRESSIONS
+    {
+      $<tokens>$ = add_tokens ("t", EXPRESSIONS);
+    }
+    | GRAMMAR
+    {
+      $<tokens>$ = add_tokens ("t", GRAMMAR);
+    }
+    | PARSER
+    {
+      $<tokens>$ = add_tokens ("t", PARSER);
+    }
+    ;
+tracestate: OFF
+    {
+      $<tokens>$ = add_tokens ("t", OFF);
+    }
+    | ON
+    {
+      $<tokens>$ = add_tokens ("t", ON);
+    }
+    ;
+
 /* Define functions.  Note that a function and an array are ambiguous;
  * the only way to tell them apart is by their declaration. */
 numfunction: IDENTIFIER '(' arguments ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Calling numeric function %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Calling numeric function %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", IDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
@@ -1092,10 +1061,9 @@ numfunction: IDENTIFIER '(' arguments ')'
 stringfunction:
       STRINGIDENTIFIER '(' arguments ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Calling string function %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Calling string function %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", STRINGIDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
@@ -1128,10 +1096,9 @@ arguments: anyexpression
 
 numfuncdecl: IDENTIFIER '(' arglist ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Declare numeric function %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Declare numeric function %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", IDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
@@ -1139,10 +1106,9 @@ numfuncdecl: IDENTIFIER '(' arglist ')'
 
 strfuncdecl: STRINGIDENTIFIER '(' arglist ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Declare string function %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Declare string function %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", STRINGIDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
@@ -1150,19 +1116,17 @@ strfuncdecl: STRINGIDENTIFIER '(' arglist ')'
 
 dimdecl: IDENTIFIER '(' arrayindex ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Declare numeric array %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Declare numeric array %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", IDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
     | STRINGIDENTIFIER '(' arrayindex ')'
     {
-#ifdef DEBUG
-      fprintf (stderr, "Declare string array %s\n",
-	       name_table[$<integer>1]->contents);
-#endif
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Declare string array %s\n",
+		 name_table[$<integer>1]->contents);
       $<tokens>$ = add_tokens ("ttt*t", STRINGIDENTIFIER,
 			       $<integer>1, '(', $<tokens>3, ')');
     }
@@ -1200,9 +1164,8 @@ add_tokens (const char *pattern, ...)
   unsigned short *tp, *new_list, *old_list = NULL;
   int i, len, old_len = 0, move_len = 0;
 
-#ifdef DEBUG
-  fprintf (stderr, "add_tokens() called with pattern \"%s\"\n", pattern);
-#endif
+  if (tracing & TRACE_GRAMMAR)
+    fprintf (stderr, "add_tokens() called with pattern \"%s\"\n", pattern);
 
   /* Run through the pattern and figure out where things will go. */
   va_start (vp, pattern);
@@ -1309,15 +1272,14 @@ add_tokens (const char *pattern, ...)
     }
   va_end (vp);
 
-#ifdef DEBUG
-  fprintf (stderr, "New token list ");
-  dump_tokens (new_list);
-#endif
+  if (tracing & TRACE_GRAMMAR) {
+    fprintf (stderr, "New token list ");
+    dump_tokens (new_list);
+  }
 
   return new_list;
 }
 
-#ifdef DEBUG
 static void
 dump_tokens (unsigned short *tokens)
 {
@@ -1328,4 +1290,3 @@ dump_tokens (unsigned short *tokens)
     fprintf (stderr, " %04X", tokens[i]);
   fprintf (stderr, "\n");
 }
-#endif

@@ -28,18 +28,27 @@ main (int argc, char **argv)
   i = 1;
   yydebug = 0;
   yy_flex_debug = 0;
+  // FIXME: Document this option and/or replace with getopt(3)
   if ((i < argc) && (argv[i][0] == '-'))
     {
       if (argv[i][1] == 'd')
 	{
-	  if (argv[i][2] != 'l')
+	  if (argv[i][2] != 'l') {
 	    yydebug = 1;
-	  if (argv[i][2] != 'p')
+	    tracing |= TRACE_GRAMMAR;
+	  }
+	  if (argv[i][2] != 'p') {
 	    yy_flex_debug = 1;
+	    tracing |= TRACE_PARSER;
+	  }
 	}
       i++;
     }
 
+  /*
+   * FIXME: Instead of switching the primary input to the given file,
+   * generate the psuedo-statement 'LOAD "filename": RUN' and execute it.
+   */
   if (i < argc)
     {
       yyin = fopen (argv[i], "r");
@@ -57,13 +66,11 @@ main (int argc, char **argv)
   sigaction (SIGINT, &sa, NULL);
 
   setjmp (return_point);
-#ifdef DEBUG
-  fprintf (stderr, "Calling yyparse():\n");
-#endif
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Calling yyparse():\n");
   status = yyparse ();
-#ifdef DEBUG
-  fprintf (stderr, "Returned %d from yyparse().\n", status);
-#endif
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Returned %d from yyparse().\n", status);
 
   if (yyin != stdin)
     fclose (yyin);

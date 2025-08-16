@@ -25,17 +25,27 @@ signed int current_load_nesting = 0;
    * on either side of the decimal point */
   if ((yytext[0] == '.') && ((yytext[1] < '0') || (yytext[1] > '9')))
     {
+      if (tracing & TRACE_PARSER)
+	fprintf (stderr, "Decimal point without a digit on either side; trying a different match\n");
       REJECT;
     }
-  yylval.floating_point = strtod (yytext, NULL); return FLOATINGPOINT;
+  yylval.floating_point = strtod (yytext, NULL);
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed floating-point constant %g\n", yylval.floating_point);
+  return FLOATINGPOINT;
 }
 
 [0-9]+	{
   yylval.floating_point = strtod (yytext, NULL);
   /* If the number is out of range, we have to use FLOATINGPOINT. */
-  if (yylval.floating_point > 4294967295.0)
+  if (yylval.floating_point > 4294967295.0) {
+    if (tracing & TRACE_PARSER)
+      fprintf (stderr, "Parsed very large integer; using floating point %g instead\n", yylval.floating_point);
     return FLOATINGPOINT;
+  }
   yylval.integer = (unsigned long) yylval.floating_point;
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed integer constant %d\n", yylval.integer);
   return INTEGER;
 }
 
@@ -44,83 +54,263 @@ signed int current_load_nesting = 0;
     (1, WALIGN (sizeof (struct string_value) + yyleng - 2 + 1));
   yylval.string->length = yyleng - 2;
   memcpy (yylval.string->contents, &yytext[1], yyleng - 2);
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed string constant \"%s\"\n", yylval.string->contents);
   return STRING;
 }
 
-"<="	return LESSEQ;
+"<="	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed less-or-equals comparator\n");
+  return LESSEQ;
+}
 
-">="	return GRTREQ;
+">="	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed greater-or-equals comparator\n");
+  return GRTREQ;
+}
 
-"<>"	return NOTEQ;
+"<>"	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed not-equals comparator\n");
+  return NOTEQ;
+}
 
 "\n"|"$"|"("|")"|"*"|"+"|","|"-"|"/"|":"|";"|"<"|"="|">"|"^"	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed symbol '%c'", yytext[0]);
   return yytext[0];
 }
 
-AND	return AND;
+AND	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed AND operator\n");
+  return AND;
+}
 
-BYE	return BYE;
+BYE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed BYE command\n");
+  return BYE;
+}
 
-CONTINUE	return CONTINUE;
+CONTINUE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed CONTINUE command\n");
+  return CONTINUE;
+}
 
-DATA	return DATA;
+DATA	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed DATA command\n");
+  return DATA;
+}
 
-DEF	return DEF;
+DEF	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed DEF command\n");
+  return DEF;
+}
 
-DIM	return DIM;
+DIM	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed DIM command\n");
+  return DIM;
+}
 
-ELSE	return ELSE;
+ELSE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed ELSE token\n");
+  return ELSE;
+}
 
-END	return END;
+END	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed END command\n");
+  return END;
+}
 
-FOR	return FOR;
+EXPRESSIONS	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed EXPRESSIONS token\n");
+  return EXPRESSIONS;
+}
 
-GOSUB	return GOSUB;
+FOR	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed FOR command\n");
+  return FOR;
+}
 
-GOTO	return GOTO;
+GOSUB	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed GOSUB command\n");
+  return GOSUB;
+}
 
-IF	return IF;
+GOTO	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed GOTO command\n");
+  return GOTO;
+}
 
-INPUT	return INPUT;
+GRAMMAR	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed GRAMMAR token\n");
+  return GRAMMAR;
+}
 
-LET	return LET;
+IF	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed IF command\n");
+  return IF;
+}
 
-LIST	return LIST;
+INPUT	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed INPUT command\n");
+  return INPUT;
+}
 
-LOAD	return LOAD;
+LET	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed LET command\n");
+  return LET;
+}
 
-NEW	return NEW;
+LINES	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed LINES token\n");
+  return LINES;
+}
 
-NEXT	return NEXT;
+LIST	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed LIST command\n");
+  return LIST;
+}
 
-ON	return ON;
+LOAD	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed LOAD command\n");
+  return LOAD;
+}
 
-OR	return OR;
+NEW	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed NEW command\n");
+  return NEW;
+}
 
-PRINT	return PRINT;
+NEXT	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed NEXT command\n");
+  return NEXT;
+}
 
-READ	return READ;
+OFF	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed OFF token\n");
+  return OFF;
+}
 
-RESTORE	return RESTORE;
+ON	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed ON token\n");
+  return ON;
+}
 
-RETURN	return RETURN;
+OR	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed OR operator\n");
+  return OR;
+}
+
+PARSER {
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed PARSER token\n");
+  return PARSER;
+}
+
+PRINT	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed PRINT command\n");
+  return PRINT;
+}
+
+READ	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed READ command\n");
+  return READ;
+}
+
+RESTORE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed RESTORE command\n");
+  return RESTORE;
+}
+
+RETURN	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed RETURN command\n");
+  return RETURN;
+}
 
 REM	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed REM command\n");
   BEGIN(REMark);
   return REM;
 }
 
-RUN	return RUN;
+RUN	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed RUN command\n");
+  return RUN;
+}
 
-SAVE	return SAVE;
+SAVE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed SAVE command\n");
+  return SAVE;
+}
 
-STEP	return STEP;
+STATEMENTS	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed STATEMENTS token\n");
+  return STATEMENTS;
+}
 
-STOP	return STOP;
+STEP	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed STEP token\n");
+  return STEP;
+}
 
-THEN	return THEN;
+STOP	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed STOP command\n");
+  return STOP;
+}
 
-TO	return TO;
+THEN	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed THEN token\n");
+  return THEN;
+}
+
+TO	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed TO token\n");
+  return TO;
+}
+
+TRACE	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed TRACE command\n");
+  return TRACE;
+}
 
 <REMark>.+	{
   yylval.string = (struct string_value *) calloc
@@ -133,6 +323,8 @@ TO	return TO;
       yylval.string->length = yyleng;
       memcpy (yylval.string->contents, yytext, yyleng);
     }
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed remark \"%s\"\n", yylval.string->contents);
   BEGIN(0);
   return RESTOFLINE;
 }
@@ -142,17 +334,26 @@ TO	return TO;
   yylval.string = (struct string_value *) calloc
     (1, WALIGN (sizeof (struct string_value) + 1));
   unput ('\n');
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed empty remark\n", yylval.string->contents);
   BEGIN(0);
   return RESTOFLINE;
 }
 
-TAB	return TAB;
+TAB	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed TAB\n");
+  return TAB;
+}
 
 [A-Z][0-9A-Z]*\$?	{
-#ifdef DEBUG
-  fprintf (stderr, "Identified identifier %s\n", yytext);
-#endif
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed identifier %s;", yytext);
   yylval.integer = find_var_name (yytext);
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, " matches %s identifier #%d\n",
+	     (yytext[yyleng - 1] == '$') ? "string" : "numeric",
+	     yylval.integer);
   return ((yytext[yyleng - 1] == '$') ? STRINGIDENTIFIER : IDENTIFIER);
 }
 
@@ -161,6 +362,9 @@ TAB	return TAB;
 [^-\t\n \"$()*+,./:;<=>0-9A-Z^].*	{
   /* Any unrecognized character should result in
    * the entire line being an error. */
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Unrecognized character during parsing; code point %d\n",
+	     yytext[0]);
   printf ("ERROR- %s\n", yytext);
   return RESTOFLINE;
 }
@@ -168,6 +372,8 @@ TAB	return TAB;
 (".")|("."[^\n0-9].*)	{
   /* `Floating-point number' patterns without any digits (i.e.,
    * a single period) should fall through here. */
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Decimal point without a digit on either side\n");
   printf ("ERROR- %s\n", yytext);
   return RESTOFLINE;
 }
@@ -179,12 +385,13 @@ TAB	return TAB;
    */
 <<EOF>> {
   if (--current_load_nesting < 0) {
+    if (tracing & TRACE_PARSER)
+      fprintf(stderr, "End of file reached on primary input; quitting.\n");
     yyterminate();
   }
   else {
-#ifdef DEBUG
-    fprintf (stderr, "End of file reached; switching back to the previous input\n");
-#endif
+    if (tracing & TRACE_PARSER)
+      fprintf (stderr, "End of file reached; switching back to the previous input\n");
     yypop_buffer_state();
   }
 }

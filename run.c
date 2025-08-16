@@ -49,6 +49,7 @@ static const struct {
   { RUN, cmd_run },
   { SAVE, cmd_save },
   { STOP, cmd_stop },
+  { TRACE, cmd_trace },
 };
 
 
@@ -72,7 +73,8 @@ int for_stack_size;
  * or a statement which changes the current line/statement. */
 static unsigned long stop_line;
 static unsigned short stop_statement;
-/* DEBUG */ int tracing = 0;
+/* For debugging */
+int tracing = 0;
 
 
 /* Search a given line for the Nth statement */
@@ -119,6 +121,8 @@ execute_statement (struct statement_header *stmt)
     {
       if (command_table[i].token == stmt->command)
 	{
+	  if (tracing & TRACE_STATEMENTS)
+	    list_statement (stmt, stderr);
 	  command_table[i].command (stmt);
 	  return;
 	}
@@ -144,7 +148,7 @@ execute (struct line_header *command_line)
   stmt = &line->statement[0];
   while (executing)
     {
-      if ((tracing & 1) && (current_statement == 0))
+      if ((tracing & TRACE_LINES) && (current_statement == 0))
 	list_line (line, stderr);
       current_statement++;
       last_line = current_line;
@@ -663,4 +667,36 @@ cmd_next (struct statement_header *stmt)
       memmove (for_stack, &for_stack[1],
 	       sizeof (struct for_stack_s) * --for_stack_size);
     }
+}
+
+void
+cmd_trace (struct statement_header *stmt)
+{
+  unsigned short *tp = (unsigned short *) &stmt[1];
+  int target = (int) tp[0];
+  int state = (int) tp[1];
+  int mask = 0;
+
+  switch (target) {
+  case LINES:
+    mask = TRACE_LINES;
+    break;
+  case STATEMENTS:
+    mask = TRACE_STATEMENTS;
+    break;
+  case EXPRESSIONS:
+    mask = TRACE_EXPRESSIONS;
+    break;
+  case GRAMMAR:
+    mask = TRACE_GRAMMAR;
+    break;
+  case PARSER:
+    mask = TRACE_PARSER;
+    break;
+  }
+
+  if (state == OFF)
+    tracing &= ~mask;
+  else if (state == ON)
+    tracing |= mask;
 }

@@ -1283,7 +1283,7 @@ And the next example will show multiples of @math{\pi}:
 
 
 @c To Do: document the commands DEF,
-@c        LIST, LOAD, NEW, ON, SAVE
+@c        LIST, LOAD, NEW, ON, SAVE, TRACE
 
 @node Index, Index of Statements, , Top
 @unnumbered Index

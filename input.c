@@ -9,8 +9,6 @@
 #include "basic.tab.h"
 
 
-/* DEBUG */ extern int tracing;
-
 /* Local Global */
 static int suppress_prompt = 0;
 
@@ -195,16 +193,21 @@ cmd_input (struct statement_header *stmt)
 	numptr = &variable_values[var].num;
       else
 	strptr = &variable_values[var].str;
-      if (tracing & 2)
+      // FIXME: Should be printed to a string for later output,
+      // since we may have to print the results of
+      // additional evaluations along the way.
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "%s", name_table[var]->contents);
 
       /* If this is an array, we need to do more work */
       if (*tp == '(')
 	{
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc ('(', stderr);
-	      tracing |= 4;
+	      // FIXME: Why did the code temporarily set this trace bit?
+	      // (It tells get_indices to display the evaluated indices)
+	      // tracing |= 4;
 	    }
 	  if (*(++tp) != ITEMLIST)
 	    {
@@ -229,10 +232,11 @@ cmd_input (struct statement_header *stmt)
 	  tp = (unsigned short *) &((char *) tp)
 	    [((struct list_header *) tp)->length];
 	  ++tp;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc (')', stderr);
-	      tracing &= ~4;
+	      // FIXME
+	      // tracing &= ~4;
 	    }
 	}
 
@@ -243,7 +247,7 @@ cmd_input (struct statement_header *stmt)
 	   * Note that suppress_prompt is set only if a comma is present. */
 	  if (getdouble (numptr) < 0)
 	    return;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    fprintf (stderr, "=%g\n", *numptr);
 	} else {
 	  newstr = sgets ();
@@ -251,7 +255,7 @@ cmd_input (struct statement_header *stmt)
 	    return;
 	  free (*strptr);
 	  *strptr = newstr;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    fprintf (stderr, "=\"%s\"\n", newstr->contents);
 	}
 
@@ -423,7 +427,10 @@ cmd_read (struct statement_header *stmt)
 	  return;
 	}
       i = *tp++;
-      if (tracing & 2)
+      // FIXME: Should be printed to a string for later output,
+      // since we may have to print the results of
+      // additional evaluations along the way.
+      if (tracing & TRACE_EXPRESSIONS)
 	fprintf (stderr, "%s", name_table[i]->contents);
       if (type == IDENTIFIER)
 	numptr = &variable_values[i].num;
@@ -432,10 +439,12 @@ cmd_read (struct statement_header *stmt)
       /* If this is an array, we need to do more work */
       if (*tp == '(')
 	{
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc ('(', stderr);
-	      tracing |= 4;
+	      // FIXME: Why did the code temporarily set this trace bit?
+	      // (It tells get_indices to display the evaluated indices)
+	      // tracing |= 4;
 	    }
 	  if (*(++tp) != ITEMLIST)
 	    {
@@ -456,10 +465,11 @@ cmd_read (struct statement_header *stmt)
 	      if (strptr == NULL)
 		return;
 	    }
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    {
 	      fputc (')', stderr);
-	      tracing &= ~4;
+	      // FIXME
+	      // tracing &= ~4;
 	    }
 	}
 
@@ -475,7 +485,7 @@ cmd_read (struct statement_header *stmt)
       if (type == IDENTIFIER)
 	{
 	  *numptr = eval_number (&tp);
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    fprintf (stderr, "=%g\n", *numptr);
 	} else {
 	  newstr = eval_string (&tp);
@@ -483,7 +493,7 @@ cmd_read (struct statement_header *stmt)
 	    return;
 	  free (*strptr);
 	  *strptr = newstr;
-	  if (tracing & 2)
+	  if (tracing & TRACE_EXPRESSIONS)
 	    fprintf (stderr, "=\"%s\"\n", newstr->contents);
 	}
 
