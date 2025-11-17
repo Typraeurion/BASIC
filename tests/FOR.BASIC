@@ -32,5 +32,8 @@
 260 PRINT:REM End of the current line
 270 NEXT Y
 275 PRINT:REM Spacer
-
+280 REM Try a loop whose initial value exceeds the final value
+290 FOR X=2 TO 1
+300 PRINT "ERROR!  Loop ran with initial value past final value."
+310 NEXT X
 RUN

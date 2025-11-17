@@ -20,7 +20,7 @@ cmd_print (struct statement_header *stmt)
 
   /* If there is no print list in this statement,
    * print a blank line. */
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   if (*tp != ITEMLIST)
     {
       fputc ('\n', stdout);
@@ -48,10 +48,14 @@ cmd_print (struct statement_header *stmt)
 	  break;
 
 	case NUMEXPR:
-	  /* Evaluate the numeric print item */
+	  /* Evaluate the numeric print item.  The Darthmoth BASIC
+	   * documentation states that numbers are printed with a
+	   * leading space for positive numbers and a trailing space
+	   * so there is at least one space between numeric values
+	   * separated by a semicolon. */
 	  tp++;
 	  num = eval_number (&tp);
-	  current_column += printf ("%G", num);
+	  current_column += printf ("% G ", num);
 	  break;
 
 	case STREXPR:
@@ -74,6 +78,7 @@ cmd_print (struct statement_header *stmt)
 	{
 	case ':':
 	case '\n':
+	case ELSE:
 	  /* End of statement; print a newline */
 	  fputc ('\n', stdout);
 	  current_column = 0;

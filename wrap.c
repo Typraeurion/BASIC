@@ -65,6 +65,9 @@ main (int argc, char **argv)
   sigemptyset (&sa.sa_mask);
   sigaction (SIGINT, &sa, NULL);
 
+  if ((yyin == NULL) || (yyin == stdin))
+    puts ("\nREADY");
+
   setjmp (return_point);
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Calling yyparse():\n");

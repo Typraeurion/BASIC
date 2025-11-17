@@ -1151,6 +1151,8 @@ false (i.e. zero).  There are two forms of this statement.
 @end example
 @end cartouche
 
+@cindex implied @code{GOTO}
+
 When @code{THEN} is followed by a line number, the program goes to
 that line if the expression is true; otherwise it continues to the
 next line.  This is an implied @code{GOTO}.
@@ -1168,20 +1170,50 @@ skips that line and continues to the next line.  You may have multiple
 statements after @code{THEN}; @sc{basic} will skip all of them if the
 expression is false, with the exception of an @code{ELSE} clause.
 
+The statement following @code{THEN} may be another @code{IF}
+statement, allowing you to chain multiple conditions together.  This
+is for compatibility with some older Dartmouth @sc{basic} programs;
+for clarity in new programs, consider using the @code{AND} operator
+instead.
+
 @node ELSE, FOR and NEXT, IF, Flow Control
 @subsection @code{ELSE}
 @stindex @code{ELSE}
 
-@code{ELSE} is used following an @code{IF} @var{expression}
-@code{THEN} @var{statement} to have @sc{basic} run an alternative
-statement if the expression is false (zero).  The clause looks like
-this:
+@code{ELSE} is used following an @code{IF} / @code{THEN} statement to
+have @sc{basic} run an alternative statement if the expression is
+false (zero).  As with @code{THEN}, there are two forms of this clause
+available.
 
 @cartouche
 @example
-10 IF A < 0 THEN END:ELSE PRINT "Still going..."
+300 IF B < C THEN 320 ELSE 350
 @end example
 @end cartouche
+
+@cindex implied @code{GOTO}
+
+When @code{ELSE} is followed by a line number, the program goes to
+that line if the @code{IF} expression is false.  This is an implied
+@code{GOTO}.
+
+@cartouche
+@example
+10 IF A < 0 THEN END ELSE PRINT "Still going..."
+@end example
+@end cartouche
+
+When @code{ELSE} is followed by another statement, the program
+executes the rest of the line if the @code{IF} expression is false.
+
+The statement following @code{ELSE} may be another @code{IF}
+statement, allowing you to chain multiple conditions together.
+However, nesting @code{IF} statements this way can make your program
+confusing to read since it may not be clear which condition a
+secondary or later @code{ELSE} clause applies to.  Consider using a
+single conditional expression with @code{AND} and @code{OR} operators
+instead, or using implied @code{GOTO}s and separating the true and
+false statement blocks over different lines.
 
 @node FOR and NEXT, , ELSE, Flow Control
 @subsection Looping with @code{FOR} and @code{NEXT}

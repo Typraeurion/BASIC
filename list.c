@@ -31,12 +31,13 @@ const struct {
   { DATA, "DATA " },
   { DEF, "DEF " },
   { DIM, "DIM " },
-  { ELSE, "ELSE " },
+  { ELSE, " ELSE " },
   { EXPRESSIONS, "EXPRESSIONS " },
   { END, "END" },
   { FOR, "FOR " },
   { GOSUB, "GOSUB " },
   { GOTO, "GOTO " },
+  { _GOTO_, "" },	/* Implied `GOTO' */
   { GRAMMAR, "GRAMMAR " },
   { IF, "IF " },
   { INPUT, "INPUT " },
@@ -278,11 +279,27 @@ list_statement (struct statement_header *sp, FILE *to)
       if (token_map[i].number == sp->command)
 	{
 	  fputs (token_map[i].name, to);
-	  for (tp = (unsigned short *) &sp[1];
-	       (char *) tp < &((char *) sp)[sp->length]; )
-	    {
-	      tp += list_token (tp, to);
-	    }
+	  /* IF statements need special handling, as they
+	   * include additional offset fields to nested
+	   * statements for their THEN and ELSE clauses. */
+	  if (sp->command == IF) {
+	    struct if_header *ifp = (struct if_header *) sp;
+	    struct statement_header *then_sp = (struct statement_header *)
+	      &((char *) ifp)[ifp->then_offset];
+	    /* struct statement_header *else_sp = (struct statement_header *)
+	    &((char *) ifp)[ifp->else_offset + sizeof(short)]; */
+	    for (tp = &ifp->tokens[0]; (void *) tp < (void *) then_sp; )
+	      tp += list_token(tp, to);
+	    /* list_statement (then_sp, to);
+	    if ((char *) else_sp < &((char *) ifp)[ifp->length])
+	      list_statement (else_sp, to); */
+	  }
+	  else {
+	    for (tp = &sp->tokens[0]; (char *) tp < &((char *) sp)[sp->length]; )
+	      {
+		tp += list_token (tp, to);
+	      }
+	  }
 	  return;
 	}
     }
@@ -308,10 +325,10 @@ void
 cmd_list (struct statement_header *stmt)
 {
   unsigned long start_line, end_line;
-  unsigned short *tp = (unsigned short *) &stmt[1];
+  unsigned short *tp = &stmt->tokens[0];
   struct line_header *lp;
 
-  if ((*tp == ':') || (*tp == '\n'))
+  if ((*tp == ':') || (*tp == '\n') || (*tp == ELSE))
     {
       start_line = 0;
       end_line = (unsigned long) -1;
@@ -325,7 +342,7 @@ cmd_list (struct statement_header *stmt)
 	}
       start_line = *((unsigned long *) (++tp));
       tp = (unsigned short *) &((unsigned long *) tp)[1];
-      if ((*tp == ':') || (*tp == '\n'))
+      if ((*tp == ':') || (*tp == '\n') || (*tp == ELSE))
 	{
 	  end_line = start_line;
 	}
@@ -338,7 +355,7 @@ cmd_list (struct statement_header *stmt)
 	} else {
 	  end_line = *((unsigned long *) (++tp));
 	  tp = (unsigned short *) &((unsigned long *) tp)[1];
-	  if ((*tp != ':') && (*tp != '\n'))
+	  if ((*tp != ':') && (*tp != '\n') && (*tp != ELSE))
 	    {
 	      fputs ("Error: LIST command followed by token ", stderr);
 	      list_token (tp, stderr);
@@ -361,10 +378,10 @@ cmd_load (struct statement_header *stmt)
   FILE *load_file;
   struct line_header *lp;
 
-  if (*((unsigned short *) &stmt[1]) != STRING)
+  if (stmt->tokens[0] != STRING)
     {
       fputs ("Error: LOAD command followed by token ", stderr);
-      list_token ((unsigned short *) &stmt[1], stderr);
+      list_token (&stmt->tokens[0], stderr);
       fputc ('\n', stderr);
       return;
     }
@@ -373,7 +390,7 @@ cmd_load (struct statement_header *stmt)
       fputs ("Error: Maximum LOAD nesting exceeded\n", stderr);
       return;
     }
-  filename = (struct string_value *) &((unsigned short *) &stmt[1])[1];
+  filename = (struct string_value *) &stmt->tokens[1];
   load_file = fopen (filename->contents, "r");
   if (load_file == NULL)
     {
@@ -395,14 +412,14 @@ cmd_save (struct statement_header *stmt)
   FILE *save_file;
   struct line_header *lp;
 
-  if (*((unsigned short *) &stmt[1]) != STRING)
+  if (stmt->tokens[0] != STRING)
     {
       fputs ("Error: SAVE command followed by token ", stderr);
-      list_token ((unsigned short *) &stmt[1], stderr);
+      list_token (&stmt->tokens[0], stderr);
       fputc ('\n', stderr);
       return;
     }
-  filename = (struct string_value *) &((unsigned short *) &stmt[1])[1];
+  filename = (struct string_value *) &stmt->tokens[1];
   save_file = fopen (filename->contents, "w");
   if (save_file == NULL)
     {

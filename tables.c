@@ -516,7 +516,7 @@ cmd_dim (struct statement_header *stmt)
   unsigned short *tp;
   int i, id;
 
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   if (*tp != ITEMLIST)
     {
       fputs ("cmd_dim(): unexpected token ", stderr);

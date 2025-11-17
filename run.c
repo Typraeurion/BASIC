@@ -27,11 +27,11 @@ static const struct {
   { DATA, cmd_data },
   //  { DEF, cmd_def },
   { DIM, cmd_dim },
-  { ELSE, cmd_else },
   { END, cmd_end },
   { FOR, cmd_for },
   { GOSUB, cmd_gosub },
   { GOTO, cmd_goto },
+  { _GOTO_, cmd_goto },
   { IF, cmd_if },
   { INPUT, cmd_input },
   { _LET_, cmd_let },
@@ -122,7 +122,14 @@ execute_statement (struct statement_header *stmt)
       if (command_table[i].token == stmt->command)
 	{
 	  if (tracing & TRACE_STATEMENTS)
-	    list_statement (stmt, stderr);
+	    {
+	      list_statement (stmt, stderr);
+	      // Print a newline if the statement does not already end with one
+	      unsigned short *tail_tp = (unsigned short *)
+		&((char *) stmt)[stmt->length - sizeof(short)];
+	      if (*tail_tp != '\n')
+		fputc('\n', stderr);
+	    }
 	  command_table[i].command (stmt);
 	  return;
 	}
@@ -154,6 +161,17 @@ execute (struct line_header *command_line)
       last_line = current_line;
       last_statement = current_statement;
       execute_statement (stmt);
+      unsigned short *tail_tp = (unsigned short *)
+	&((char *) stmt)[stmt->length - sizeof(short)];
+      /* If we haven't changed position (yet), check
+       * whether the statement ends in an ELSE token;
+       * in that case we can skip the rest of the line. */
+      if ((current_line == last_line) && (current_statement == last_statement)
+	  && (*tail_tp == ELSE))
+	{
+	  current_line++;
+	  current_statement = 0;
+	}
       /* Check for a change of position */
       if ((current_line != last_line) || (current_statement != last_statement))
 	{
@@ -266,7 +284,7 @@ cmd_gosub (struct statement_header *stmt)
   unsigned short *tp;
 
   /* Evaluate the line number expression */
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   number = (unsigned long) eval_number (&tp);
   line = find_line (number, 0);
   if (line == NULL)
@@ -288,7 +306,7 @@ cmd_goto (struct statement_header *stmt)
   unsigned short *tp;
 
   /* Evaluate the line number expression */
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   number = (unsigned long) eval_number (&tp);
   line = find_line (number, 0);
   if (line == NULL)
@@ -310,7 +328,7 @@ cmd_on (struct statement_header *stmt)
   unsigned short *tp;
 
   /* Evaluate the index expression */
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   index = (unsigned long) eval_number (&tp);
 
   /* The next token should be `GOTO' or `GOSUB' */
@@ -373,8 +391,8 @@ cmd_rem (struct statement_header *stmt)
 void
 cmd_restore (struct statement_header *stmt)
 {
-  unsigned short *tp = (unsigned short *) &stmt[1];
-  if ((*tp != ':') && (*tp != '\n'))
+  unsigned short *tp = &stmt->tokens[0];
+  if ((*tp != ':') && (*tp != '\n') && (*tp != ELSE))
     {
       struct line_header *line;
       int number;
@@ -479,46 +497,23 @@ cmd_stop (struct statement_header *stmt)
 void
 cmd_if (struct statement_header *stmt)
 {
+  struct if_header *if_stmt = (struct if_header *) stmt;
   struct line_header *line;
   unsigned short *tp;
+  unsigned short terminator;
   double condition;
 
   /* Evaluate the conditional expression */
-  tp = (unsigned short *) &stmt[1];
+  tp = &if_stmt->tokens[0];
   condition = eval_number (&tp);
 
   /* The token pointer should now be pointing at THEN */
-  if (*tp++ != THEN)
+  terminator = *tp++;
+  if (terminator != THEN)
     {
       fputs ("IF: Missing THEN; got ", stderr);
       list_token (--tp, stderr);
       fputc ('\n', stderr);
-      return;
-    }
-
-  /* Where we go next depends both on the condition
-   * and whether the THEN part is a line number or statement. */
-  /* DANGER!!!  THIS WILL BREAK IF A STATEMENT HAS
-   * THE SAME LENGTH AS THE TOKEN VALUE OF "INTEGER"!!! */
-  if (*tp == INTEGER)
-    {
-      unsigned long number;
-
-      /* Jump to the given line if the condition is true;
-       * don't jump if the condition is false.  */
-      if (condition == 0.0)
-	return;
-      tp++;
-      number = *((unsigned long *) tp);
-      line = find_line (number, 0);
-      if (line == NULL)
-	{
-	  printf ("ERROR - IF: NO LINE %u\n", number);
-	  executing = 0;
-	  return;
-	}
-      current_line = number;
-      current_statement = 0;
       return;
     }
 
@@ -527,26 +522,33 @@ cmd_if (struct statement_header *stmt)
    * or go to the next line if there is no ELSE. */
   if (condition != 0.0)
     return;
-  stmt = (struct statement_header *) tp;
-  while (stmt->command != ELSE)
-    {
-      current_statement++;
-      tp = (unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)];
-      stmt = (struct statement_header *) &tp[1];
-      if (*tp == '\n')
-	/* End of the line.  Continue with the next line. */
-	return;
-    }
-  /* Found an ELSE; set the statement pointer to the following command. */
   current_statement++;
-}
-
-void
-cmd_else (struct statement_header *stmt)
-{
-  /* When we encounter an ELSE, simply skip the rest of the line.
-   * The parser should make sure an ELSE follows an IF. */
+  stmt = (struct statement_header *) tp;
+  terminator = *((unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)]);
+  while (terminator != '\n') {
+    if ((terminator == THEN) || (terminator == ':')) {
+      current_statement++;
+      stmt = (struct statement_header *) &((char *) stmt)[stmt->length];
+      terminator = *((unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)]);
+      continue;
+    }
+    if (terminator == ELSE) {
+      /* Found an ELSE; the statement pointer
+       * should be at the following statement. */
+      return;
+    }
+    /* If we reach here, the current statement ends with something
+     * other than a terminator token.  This is an internal error. */
+    fprintf (stderr, "Line %d statement %d ends in unexpected token %04X\n",
+	     current_line, current_statement, terminator);
+    // Skip to the next line
+    current_line++;
+    current_statement = 0;
+    return;
+  }
+  /* fall through when the end of the line is encountered; go to the next line. */
   current_line++;
+  current_statement = 0;
 }
 
 void
@@ -554,22 +556,65 @@ cmd_for (struct statement_header *stmt)
 {
   unsigned short *tp;
   int var;
+  double to_value, step_value;
 
   /* Get the variable index.  Note that the order of tokens is:
    * FOR: NUMLVAL, IDENTIFIER, name index, '=', NUMEXPR, ...
    * stmt token[0]  token[1]   ---------- */
-  tp = &((unsigned short *) &stmt[1])[2];
+  tp = &stmt->tokens[2];
   var = *tp++;
   /* Skip past the '=' and NUMEXPR tokens */
   tp += 2;
 
-  /* Push the iteration varuable and location of the FOR statement
+  /* Push the iteration variable and location of the FOR statement
    * onto the FOR...NEXT stack. */
   push_for (var);
 
   /* Assign the result of the first expression */
   variable_values[var].num = eval_number (&tp);
-  return;
+
+  /* tp should now be pointing to the TO token. */
+  if (*tp++ != TO)
+    {
+      fputs ("FOR: Missing TO; got ", stderr);
+      list_token (--tp, stderr);
+      fputc ('\n', stderr);
+      return;
+    }
+
+  /* Evaluate the TO end of the statement */
+  to_value = eval_number (&tp);
+  /* tp should now be pointing to either a STEP token
+   * or an end-of-statement token. */
+  if ((*tp != STEP) && (*tp != '\n') && (*tp != ':') && (*tp != ELSE))
+    {
+      fputs ("FOR: Unrecognized token at end - ", stderr);
+      list_token (tp, stderr);
+      fputc ('\n', stderr);
+      return;
+    }
+
+  if (*tp++ == STEP)
+    {
+      /* Evaluate the STEP */
+      step_value = eval_number (&tp);
+    } else {
+      /* The default step is always 1; some programs depend on this. */
+      step_value = 1.0;
+    }
+
+  /* Check whether the initial value is already past
+   * the TO value, according to the sign of the step. */
+  if ((step_value >= 0.0)
+      ? (variable_values[var].num <= to_value)
+      : (variable_values[var].num >= to_value))
+    /* If we're not past the end, proceed normally. */
+    return;
+
+  // FIXME: Need to locate the NEXT statement matching this FOR variable!
+  fputs ("ERROR - Terminating the FOR loop prematurely not implemented yet.", stderr);
+  executing = 0;
+
 }
 
 void
@@ -582,7 +627,7 @@ cmd_next (struct statement_header *stmt)
 
   /* Get the variable index.  Note that the order of tokens is:
    * NEXT: IDENTIFIER, name index */
-  var = ((unsigned short *) &stmt[1])[1];
+  var = stmt->tokens[1];
 
   /* Search the FOR...NEXT stack for the variable. */
   for (i = 0; i < for_stack_size; i++)
@@ -617,7 +662,7 @@ cmd_next (struct statement_header *stmt)
   /* Since we don't have the length of the FOR expression,
    * we'll have to evaluate it again.
    * Hopefully this won't generate an error or other side effects. */
-  tp = &((unsigned short *) &for_stmt[1])[5];
+  tp = &for_stmt->tokens[5];
   eval_number (&tp);
   /* tp should now be pointing to the TO token. */
   if (*tp++ != TO)
@@ -632,7 +677,7 @@ cmd_next (struct statement_header *stmt)
   to_value = eval_number (&tp);
   /* tp should now be pointing to either a STEP token
    * or an end-of-statement token. */
-  if ((*tp != STEP) && (*tp != '\n') && (*tp != ':'))
+  if ((*tp != STEP) && (*tp != '\n') && (*tp != ':') && (*tp != ELSE))
     {
       fputs ("FOR: Unrecognized token at end - ", stderr);
       list_token (tp, stderr);
@@ -645,9 +690,8 @@ cmd_next (struct statement_header *stmt)
       /* Evaluate the STEP */
       step_value = eval_number (&tp);
     } else {
-      /* The step is 1 or -1, depending on whether the TO value
-       * is above or below the current value of the iteration variable */
-      step_value = (variable_values[var].num <= to_value) ? 1.0 : -1.0;
+      /* The default step is always 1; some programs depend on this. */
+      step_value = 1.0;
     }
 
   /* Increment the iteration variable */
@@ -672,7 +716,7 @@ cmd_next (struct statement_header *stmt)
 void
 cmd_trace (struct statement_header *stmt)
 {
-  unsigned short *tp = (unsigned short *) &stmt[1];
+  unsigned short *tp = &stmt->tokens[0];
   int target = (int) tp[0];
   int state = (int) tp[1];
   int mask = 0;

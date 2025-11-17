@@ -1,0 +1,56 @@
+REM This code tests conditional expressions; there are at least
+REM two cases for each operator to test true and false cases.
+
+PRINT "Equals (true): "; 2 + 2 = 4
+PRINT "Equals (false): "; 1 + 2 = 5
+
+PRINT "Less than (true): "; 2.71828 < 3.14159265
+PRINT "Less than (false): "; 10 < 5
+PRINT "Less than (false; equal): "; 3 < 3
+
+PRINT "Greater than (true): "; 10 > 5
+PRINT "Greater than (false): "; 2.71828 > 3.14159265
+PRINT "Greater than (false; equal): "; 3 > 3
+
+PRINT "Less or equal (true): "; 2.71828 <= 3.14159265
+PRINT "Less or equal (false): "; 10 <= 5
+PRINT "Less or equal (true; equal): "; 3 <= 3
+
+PRINT "Greater or equal (true): "; 10 >= 5
+PRINT "Greater or equal (false): "; 2.71828 >= 3.14159265
+PRINT "Greater or equal (true; equal): "; 3 >= 3
+
+PRINT "Not equal (true): "; 1 + 2 <> 5
+PRINT "Not equal (false): "; 2 + 2 <> 4
+
+PRINT "String equals (true): "; "Hello" = "Hello"
+PRINT "String equals (false): "; "Hello" = "World"
+
+PRINT "String less than (true): "; "10" < "5"
+PRINT "String less than (false): "; "3.14.15" < "2.71.82"
+PRINT "String less than (false; equal): "; "Alphabeta" < "Alphabeta"
+
+PRINT "String greater than (true): "; "3.14.15" > "2.71.82"
+PRINT "String greater than (false): "; "10" > "5"
+PRINT "String greater than (false; equal): "; "Alphabeta" > "Alphabeta"
+
+PRINT "String less or equal (true): "; "10" <= "5"
+PRINT "String less or equal (false): "; "3.14.15" <= "2.71.82"
+PRINT "String less or equal (true; equal): "; "Alphabeta" <= "Alphabeta"
+
+PRINT "String greater or equal (true): "; "3.14.15" >= "2.71.82"
+PRINT "String greater or equal (false): "; "10" >= "5"
+PRINT "String greater or equal (true; equal): "; "Alphabeta" >= "Alphabeta"
+
+PRINT "String not equal (true): "; "Hello" <> "World"
+PRINT "String not equal (false): "; "Hello" <> "Hello"
+
+PRINT "True AND true: "; 1 + 1 = 2 AND 2 + 2 = 4
+PRINT "True AND false: "; 1 + 1 = 2 AND 2 + 2 = 5
+PRINT "False AND true: "; 1 + 1 = 3 AND 2 + 2 = 4
+PRINT "False AND false: "; 1 + 1 = 3 AND 2 + 2 = 5
+
+PRINT "True OR true: "; 1 + 1 = 2 OR 2 + 2 = 4
+PRINT "True OR false: "; 1 + 1 = 2 OR 2 + 2 = 5
+PRINT "False OR true: "; 1 + 1 = 3 OR 2 + 2 = 4
+PRINT "False OR false: "; 1 + 1 = 3 OR 2 + 2 = 5

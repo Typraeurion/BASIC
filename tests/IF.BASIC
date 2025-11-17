@@ -1,0 +1,37 @@
+10 IF 1 THEN PRINT "Test 1: THEN clause passed for simple true condition":GOTO 20
+15 PRINT "Test 1: ERROR!  No clause executed for true IF / THEN statement"
+20 IF 0 THEN PRINT "Test 2: ERROR!  THEN clause executed for simple false condition":GOTO 30
+25 PRINT "Test 2: THEN clause skipped for simple false condition"
+30 IF 1 THEN PRINT "Test 3: THEN clause passed for IF/THEN/ELSE true condition" ELSE PRINT "Test 3: ERROR!  ELSE clause executed for IF/THEN/ELSE false condition!"
+40 IF 0 THEN PRINT "Test 4: ERROR!  THEN clause executed for false condition!" ELSE PRINT "Test 4: ELSE clause passed for simple false condition"
+50 IF 1 THEN 55
+51 PRINT "Test 5: ERROR!  No goto taken for true IF / THEN statement"
+52 GOTO 60
+55 PRINT "Test 5: THEN goto taken for simple true condition"
+60 IF 0 THEN 65
+61 PRINT "Test 6: THEN goto skipped for simple false condition"
+62 GOTO 70
+65 PRINT "Test 6: ERROR!  THEN goto taken for simple false condition"
+70 IF 1 THEN 73 ELSE 76
+71 PRINT "Test 7: ERROR!  No goto taken for true IF / THEN / ELSE statement"
+72 GOTO 80
+73 PRINT "Test 7: THEN goto taken for true IF / THEN / ELSE statement"
+74 GOTO 80
+76 PRINT "Test 7: ERROR!  ELSE goto taken for true IF / THEN / ELSE statement"
+80 IF 0 THEN 83 ELSE 86
+81 PRINT "Test 8: ERROR!  No goto taken for false IF / THEN / ELSE statement"
+82 GOTO 90
+83 PRINT "Test 8: ERROR!  THEN goto taken for false IF / THEN / ELSE statement"
+84 GOTO 90
+86 PRINT "Test 8: ELSE goto taken for false IF / THEN / ELSE statement"
+90 IF 1 THEN PRINT "";: PRINT "Test 9: Statement following THEN clause executed for true condition":GOTO 100
+95 PRINT "Test 9: ERROR!  GOTO following THEN clause for true condition was not executed"
+100 IF 0 THEN PRINT "";:PRINT "Test 10: ERROR!  Statement following THEN clause executed for false condition":GOTO 110
+105 PRINT "Test 10: GOTO following THEN clause for false condition was not taken"
+110 IF 1 THEN PRINT "" ELSE PRINT "":PRINT "Test 11: ERROR!  Statement following ELSE clause executed for true condition":GOTO 120
+115 PRINT "Test 11: GOTO following ELSE clause for true condition was not taken"
+120 IF 0 THEN PRINT "" ELSE PRINT "":PRINT "Test 12: Statement following ELSE clause executed for false condition":GOTO 130
+125 PRINT "Test 12: ERROR!  GOTO following ELSE clause for false condition was not taken"
+130 END
+
+RUN

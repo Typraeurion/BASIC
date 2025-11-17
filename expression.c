@@ -249,12 +249,17 @@ eval_numexpr (unsigned short **tpp)
   unsigned short *tp = *tpp;
   double op1, op2;	/* Operands */
   unsigned short op;	/* Operator */
+  double result;
 
   /* Check for a unary operation -- negation */
   if (*tp == NEG)
     {
       *tpp = ++tp;
-      return -(eval_number (tpp));
+      op1 = eval_number (tpp);
+      result = -op1;
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf(stderr, "- %g = %g\n", op1, result);
+      return result;
     }
 
   /* All other operations are binary */
@@ -265,11 +270,31 @@ eval_numexpr (unsigned short **tpp)
 
   switch (op)
     {
-    case '+': return (op1 + op2);
-    case '-': return (op1 - op2);
-    case '*': return (op1 * op2);
-    case '/': return (op1 / op2);
-    case '^': return pow (op1, op2);
+    case '+':
+      result = (op1 + op2);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g + %g = %g\n", op1, op2, result);
+      return result;
+    case '-':
+      result = (op1 - op2);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g - %g = %g\n", op1, op2, result);
+      return result;
+    case '*':
+      result = (op1 * op2);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g * %g = %g\n", op1, op2, result);
+      return result;
+    case '/':
+      result = (op1 / op2);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g / %g = %g\n", op1, op2, result);
+      return result;
+    case '^':
+      result = pow (op1, op2);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g ^ %g = %g\n", op1, op2, result);
+      return result;
     }
 
   /* For comparisons of equality, we'll use a lower precision
@@ -289,14 +314,46 @@ eval_numexpr (unsigned short **tpp)
 
   switch (op)
     {
-    case '=': return ((op1 == op2) ? 1.0 : 0.0);
-    case NOTEQ: return ((op1 != op2) ? 1.0 : 0.0);
-    case '<': return ((op1 < op2) ? 1.0 : 0.0);
-    case '>': return ((op1 > op2) ? 1.0 : 0.0);
-    case LESSEQ: return ((op1 <= op2) ? 1.0 : 0.0);
-    case GRTREQ: return ((op1 >= op2) ? 1.0 : 0.0);
-    case AND: return ((op1 != 0.0) && (op2 != 0.0));
-    case OR: return ((op1 != 0.0) || (op2 != 0.0));
+    case '=':
+      result = ((op1 == op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g = %g = %g\n", op1, op2, result);
+      return result;
+    case NOTEQ:
+      result = ((op1 != op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g <> %g = %g\n", op1, op2, result);
+      return result;
+    case '<':
+      result = ((op1 < op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g < %g = %g\n", op1, op2, result);
+      return result;
+    case '>':
+      result = ((op1 > op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g > %g = %g\n", op1, op2, result);
+      return result;
+    case LESSEQ:
+      result = ((op1 <= op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g <= %g = %g\n", op1, op2, result);
+      return result;
+    case GRTREQ:
+      result = ((op1 >= op2) ? 1.0 : 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g >= %g = %g\n", op1, op2, result);
+      return result;
+    case AND:
+      result = ((op1 != 0.0) && (op2 != 0.0));
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g AND %g = %g\n", op1, op2, result);
+      return result;
+    case OR:
+      result = ((op1 != 0.0) || (op2 != 0.0));
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf (stderr, "%g OR %g = %g\n", op1, op2, result);
+      return result;
     }
 
   /* Anything past this point is a bad operator. */
@@ -320,6 +377,40 @@ eval_strcond (unsigned short **tpp)
   op = *((*tpp)++);
   string2 = eval_string (tpp);
   result = strcmp (string1->contents, string2->contents);
+  if (tracing & TRACE_EXPRESSIONS) {
+    switch (op) {
+    case '=':
+      fprintf (stderr, "\"%s\" = \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result == 0) ? 1.0 : 0.0);
+      break;
+    case NOTEQ:
+      fprintf (stderr, "\"%s\" <> \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result != 0) ? 1.0 : 0.0);
+      break;
+    case '<':
+      fprintf (stderr, "\"%s\" < \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result < 0) ? 1.0 : 0.0);
+      break;
+    case '>':
+      fprintf (stderr, "\"%s\" > \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result > 0) ? 1.0 : 0.0);
+      break;
+    case LESSEQ:
+      fprintf (stderr, "\"%s\" <= \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result <= 0) ? 1.0 : 0.0);
+      break;
+    case GRTREQ:
+      fprintf (stderr, "\"%s\" >= \"%s\" = %g\n",
+	       string1->contents, string2->contents,
+	       (result >= 0) ? 1.0 : 0.0);
+      break;
+    }
+  }
   free (string1);
   free (string2);
 
@@ -350,7 +441,7 @@ cmd_let (struct statement_header *stmt)
   struct string_value **strptr, *newstr;
   int i;
 
-  tp = (unsigned short *) &stmt[1];
+  tp = (unsigned short *) &stmt->tokens[0];
   /* The next token should tell is whether this is a string
    * or numeric assignment */
   switch ((int) *tp++)

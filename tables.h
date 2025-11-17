@@ -33,8 +33,19 @@ struct statement_header {
   unsigned short length;	/* Size in bytes of the statement,
 				 * including this header. */
   short command;		/* Token representing the command */
+  unsigned short tokens[0];	/* Any additional statement parameters */
   /* (For `IF' statements, this goes up to, but not past, the `THEN'.
    * For other statements, this includes the ':' or '\n' at the end.)  */
+};
+
+struct if_header {
+  unsigned short length;	/* Size in bytes of the if clause up to
+				 * and including the `THEN' token. */
+  short command;		/* This will always be the `IF' token. */
+  unsigned short then_offset;	/* Offset in bytes to the `THEN' statement. */
+  unsigned short else_offset;	/* Offset in bytes to the `ELSE' statement
+				 * if there is one, or 0 if there is none. */
+  unsigned short tokens[0];	/* Start of the numeric expression */
 };
 
 struct line_header {
@@ -141,7 +152,6 @@ void cmd_continue (struct statement_header *);
 void cmd_data (struct statement_header *);
 void cmd_def (struct statement_header *);
 void cmd_dim (struct statement_header *);
-void cmd_else (struct statement_header *);
 void cmd_end (struct statement_header *);
 void cmd_for (struct statement_header *);
 void cmd_gosub (struct statement_header *);

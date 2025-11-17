@@ -397,14 +397,14 @@ cmd_read (struct statement_header *stmt)
       return;
     }
   /* The data list structure follows the ITEMLIST token. */
-  data_list = (struct list_header *) &((unsigned short *) &data_stmt[1])[1];
+  data_list = (struct list_header *) &data_stmt->tokens[1];
   /* Skip ahead to the `current_data_item'th element in the data list. */
   data_item = &data_list->item[0];
   for (var_index = 0; var_index < current_data_item; var_index++)
     data_item = (struct list_item *)
       &((char *) data_item)[data_item->length + sizeof (short)];
 
-  tp = (unsigned short *) &stmt[1];
+  tp = &stmt->tokens[0];
   if (*tp++ != ITEMLIST)
     {
       fputs ("cmd_read(): Unexpected token ", stderr);
@@ -522,8 +522,7 @@ cmd_read (struct statement_header *stmt)
 	    }
 
 	  /* Reset the data list and data item pointers */
-	  data_list = (struct list_header *)
-	    &((unsigned short *) &data_stmt[1])[3];
+	  data_list = (struct list_header *) &data_stmt->tokens[3];
 	  data_item = &data_list->item[0];
 	}
     }

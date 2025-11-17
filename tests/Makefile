@@ -2,17 +2,21 @@
 
 PROGRAM=../basic
 
-.PHONY: test-bye test-continue test-data test-dim \
-	test-end test-for test-input test-let \
+.PHONY: test-bye test-conditions test-continue test-data test-dim \
+	test-end test-for test-if test-input test-let \
 	test-print test-rem test-restore test-stop
 
 all:	test-bye test-rem test-print test-let test-dim \
 	test-end test-stop test-continue \
 	test-data test-read test-restore \
-	test-for
+	test-for test-if \
+	test-conditions
 
 test-bye: BYE.BASIC
 	cat BYE.BASIC | $(PROGRAM)
+
+test-conditions: condexpr.BASIC
+	cat condexpr.BASIC | $(PROGRAM)
 
 test-continue: CONTINUE.BASIC
 	cat CONTINUE.BASIC | $(PROGRAM)
@@ -28,6 +32,9 @@ test-end: END.BASIC
 
 test-for: FOR.BASIC
 	cat FOR.BASIC | $(PROGRAM)
+
+test-if: IF.BASIC
+	cat IF.BASIC | $(PROGRAM)
 
 test-input: INPUT.BASIC
 	echo "Warning: automatic input will not work as expected."

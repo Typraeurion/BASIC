@@ -3,6 +3,7 @@
   /* C declarations */
 #include <setjmp.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,18 +12,22 @@ extern int yylex (void);
 void yyerror (const char *);
 extern jmp_buf return_point;
 static unsigned short *add_tokens (const char *, ...);
+static void adjust_if_statements (struct line_header *token_line);
 static void dump_tokens (unsigned short *);
 #define YYERROR_VERBOSE
 #define YYDEBUG 1
 %}
 
 /* Bison declarations */
+%define parse.error verbose
+
 %union {
   unsigned long integer;
   double floating_point;
   struct string_value *string;
   struct list_header *token_list;
   struct statement_header *token_statement;
+  struct if_header *token_if_phrase;
   struct line_header *token_line;
   /* Generic pointer to tokenized data;
    * the first element is always the current length. */
@@ -40,6 +45,7 @@ static void dump_tokens (unsigned short *);
 %token FOR
 %token GOSUB
 %token GOTO
+%token _GOTO_	/* Implied GOTO for IF / THEN [ ELSE ] statements */
 %token GRAMMAR
 %token IF
 %token INPUT
@@ -105,6 +111,15 @@ line: '\n'              /* Do nothing */
 	  $<tokens>$ = add_tokens ("*t", $<tokens>2, '\n');
 	  /* Change the line number */
 	  $<token_line>$->line_number = $<integer>1;
+	  /*
+	   * IF statements need to be handled specially, because
+	   * they actually contain two or three statements
+	   * separated by the THEN and ELSE tokens.  The following
+	   * statements may themselves be IF statements, making this
+	   * a recursive problem.  The token list we get includes all
+	   * three clauses of the IF statement, which we need to break up.
+	   */
+	  adjust_if_statements ($<token_line>$);
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Adding line %d to program\n", $<integer>1);
 	  add_line ($<token_line>$);
@@ -120,6 +135,8 @@ line: '\n'              /* Do nothing */
 	{
 	  /* Complete the line of code with a newline */
 	  $<tokens>$ = add_tokens ("*t", $<tokens>1, '\n');
+	  /* See note on IF statements above */
+	  adjust_if_statements ($<token_line>$);
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Executing line of BASIC code\n");
 	  /* Execute this line */
@@ -134,28 +151,10 @@ lineofcode: statement	/* Create a new line */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Create a new line from the first statement\n");
-	  /* ELSE and IF statements need to be handled specially,
-	   * because they actually contain two statements
-	   * preceded with a dummy statement. */
-	  if ($<token_statement>1->command == ELSE)
-	    {
-	      $<tokens>$ = add_tokens
-		("it&t&", -1, $<token_statement>1[1].length,
-		 &$<token_statement>1[1],
-		 ((struct statement_header *)
-		  ((unsigned long) &$<token_statement>1[1]
-		   + $<token_statement>1[1].length))->length + sizeof (short),
-		 ((unsigned long) &$<token_statement>1[1]
-		  + $<token_statement>1[1].length));
-	      free ($<tokens>1);
-	    }
-	  else
-	    {
-	      /* Save the length of the completed statement +1,
-	       * as the end-of-statement marker will be included later. */
-	      $<tokens>$ = add_tokens
-		("it*", -1, $<tokens>1[0] + sizeof (short), $<tokens>1);
-	    }
+	  /* Save the length of the completed statement +1,
+	   * as the end-of-statement marker will be included later. */
+	  $<tokens>$ = add_tokens
+	    ("it*", (long) -1, $<tokens>1[0] + sizeof (short), $<tokens>1);
 	}
     | lineofcode ':' statement /* Statements are separated by colons */
 	{
@@ -165,29 +164,11 @@ lineofcode: statement	/* Create a new line */
 	   * end-of-statement marker will be included later. */
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Added another statement to the line\n");
-	  /* ELSE and IF statements need to be handled specially,
-	   * because they actually contain two statements
-	   * preceded with a dummy statement. */
-	  if ($<token_statement>3->command == ELSE)
-	    {
-	      $<tokens>$ = add_tokens
-		("*tt&t&", $<tokens>1, ':', $<token_statement>3[1].length,
-		 &$<token_statement>3[1],
-		 ((struct statement_header *)
-		  ((unsigned long) &$<token_statement>3[1]
-		   + $<token_statement>3[1].length))->length + sizeof (short),
-		 ((unsigned long) &$<token_statement>3[1]
-		  + $<token_statement>3[1].length));
-	      free ($<tokens>3);
-	    }
-	  else
-	    {
-	      /* Save the length of the completed statement +1,
-	       * as the end-of-statement marker will be included later. */
-	      $<tokens>$ = add_tokens
-		("*tt#", $<tokens>1, ':',
-		 $<tokens>3[0] + sizeof (short), $<tokens>3);
-	    }
+	  /* Save the length of the completed statement +1,
+	   * as the end-of-statement marker will be included later. */
+	  $<tokens>$ = add_tokens
+	    ("*tt#", $<tokens>1, ':',
+	     $<tokens>3[0] + sizeof (short), $<tokens>3);
 	}
     ;
 
@@ -246,17 +227,6 @@ statement: assignment
 	  /* Convert the variable token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", DIM, $<tokens>2);
 	}
-    | ELSE statement    /* Execute here iff previous `IF' expr was false */
-	{
-	  if (tracing & TRACE_GRAMMAR)
-	    fprintf (stderr, "Execute this statement iff the previous IF result was false\n");
-	  /* Extend the current statement to precede it with `ELSE'.
-	   * Since we need to keep `ELSE' separate from the following
-	   * statement, precede this with a dummy statement. */
-	  $<tokens>$ = add_tokens
-	    ("tttt#", ELSE, sizeof (struct statement_header), ELSE,
-	     $<token_statement>2->length + sizeof (short), $<tokens>2);
-	}
     | END               /* Stop program execution */
 	{
 	  if (tracing & TRACE_GRAMMAR)
@@ -298,27 +268,60 @@ statement: assignment
 	  /* Convert the expression token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", GOTO, $<tokens>2);
 	}
-    | IF numexpression THEN INTEGER /* `GOTO' a line if expression is true */
+    | IF numexpression THEN INTEGER elseclause /* `GOTO' a line if expression is true */
 	{
+
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Go to another line if this expression is true\n");
-	  /* Convert the expression token list into a statement */
-	  $<tokens>$ = add_tokens ("t*tti", IF, $<tokens>2, THEN,
-				   INTEGER, $<integer>4);
+	  /* Construct the IF statement from the expression and clause tokens.
+	   * The IF header includes two additional offset values to the
+	   * statements following the THEN and (optional) ELSE tokens. */
+	  int then_offset = offsetof(struct if_header, tokens)
+	    /* We'll be subtracting one short for the length of the
+	     * numeric expression token list, but then adding one
+	     * for the terminating THEN token, so they cancel out. */
+	    + $<token_statement>2->length;
+	  /* The length of the THEN clause includes:
+	   *  - its length (including the length short)
+	   *  - the implied GOTO command
+	   *  - the token for an INTEGER value
+	   *  - the line number (long)
+	   *  - the statement terminator that will be added later */
+	  const int then_length = 4 * sizeof(short) + sizeof(long);
+	  int else_offset = then_offset + then_length;
+	  $<tokens>$ = add_tokens
+	    ("ttt*tttti", IF, then_offset, else_offset, $<tokens>2, THEN,
+	     then_length, _GOTO_, INTEGER, $<integer>4);
+	  if ($<tokens>5 != NULL) // ELSE clause
+	    $<tokens>$ = add_tokens
+	      ("*tt#", $<tokens>$, ELSE,
+	       /* Add one to the original clause length to include
+		* the statement terminator that will be added later. */
+	       $<token_statement>5->length + sizeof(short), $<tokens>5);
 	}
-    | IF numexpression THEN statement /* Continue execution if expr is true */
+    | IF numexpression THEN statement elseclause /* Continue execution if expr is true */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr,
 		     "Execute the next statement if this expression is true\n");
-	  /* Convert the expression into a statement. */
-	  $<tokens>$ = add_tokens ("t*t", IF, $<tokens>2, THEN);
-	  /* Attach the following statement.
-	   * Since we need to keep `IF-THEN' separate from the following
-	   * statement, precede this with a dummy statement. */
+	  /* Construct the IF statement from the expression and clause tokens.
+	   * The IF header includes two additional offset values to the
+	   * statements following the THEN and (optional) ELSE tokens. */
+	  int then_offset = offsetof(struct if_header, tokens)
+	    + $<token_statement>2->length;	// as above
+	  /* Add the size of another token to the length of the THEN clause
+	   * to include the statement terminator that will be added later. */
+	  int then_length = $<token_statement>4->length + sizeof(short);
+	  int else_offset = then_offset + then_length;
 	  $<tokens>$ = add_tokens
-	    ("tt*t#", ELSE, $<tokens>$[0], $<tokens>$,
-	     $<token_statement>4->length, $<tokens>4);
+	    ("ttt*tt#", IF, then_offset, else_offset, $<tokens>2, THEN,
+	     then_length, $<tokens>4);
+	  if ($<tokens>5 != NULL) // ELSE clause
+	    $<tokens>$ = add_tokens
+	      ("*tt#", $<tokens>$, ELSE,
+	       /* Add one to the original clause length to include
+		* the statement terminator that will be added later. */
+	       $<token_statement>5->length + sizeof(short), $<tokens>5);
 	}
     | INPUT varlist /* Read a value from the terminal and store in vars */
 	{
@@ -700,7 +703,7 @@ anyexpression: numexpression
     }
     ;
 
-numexpression: arithexpr | condexpr ;
+numexpression: condexpr | arithexpr ;
 
 stringexpression: STRING
     {
@@ -807,7 +810,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', NUMEXPR, $<tokens>1, '>', $<tokens>3, '}');
     }
-    | arithexpr "<=" arithexpr
+    | arithexpr LESSEQ arithexpr
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two numbers for not more\n");
@@ -816,7 +819,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', NUMEXPR, $<tokens>1, LESSEQ, $<tokens>3, '}');
     }
-    | arithexpr ">=" arithexpr
+    | arithexpr GRTREQ arithexpr
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two numbers for not less\n");
@@ -825,7 +828,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', NUMEXPR, $<tokens>1, GRTREQ, $<tokens>3, '}');
     }
-    | arithexpr "<>" arithexpr
+    | arithexpr NOTEQ arithexpr
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two numbers for inequality\n");
@@ -861,7 +864,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', STREXPR, $<tokens>1, '>', $<tokens>3, '}');
     }
-    | stringexpression "<=" stringexpression
+    | stringexpression LESSEQ stringexpression
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two strings for not after\n");
@@ -870,7 +873,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', STREXPR, $<tokens>1, LESSEQ, $<tokens>3, '}');
     }
-    | stringexpression ">=" stringexpression
+    | stringexpression GRTREQ stringexpression
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two strings not before\n");
@@ -879,7 +882,7 @@ condexpr:
       $<tokens>$ = add_tokens
 	("tt*t#t", '{', STREXPR, $<tokens>1, GRTREQ, $<tokens>3, '}');
     }
-    | stringexpression "<>" stringexpression
+    | stringexpression NOTEQ stringexpression
     {
       if (tracing & TRACE_GRAMMAR)
 	fprintf (stderr, "Comparing two strings for inequality\n");
@@ -1014,7 +1017,25 @@ arrayindex: numexpression
     }
     ;
 
-/** Define trace types */
+/* ELSE clauses are optional */
+elseclause: /* empty */
+    {
+      $<tokens>$ = NULL;
+    }
+    | ELSE INTEGER
+    {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Go to another line if the previous expression was false\n");
+      $<tokens>$ = add_tokens ("tti", _GOTO_, INTEGER, $<integer>2);
+    }
+    | ELSE statement
+    {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Execute the next statement if the previous expression was false\n");
+      $<tokens>$ = $<tokens>2;
+    }
+
+/* Define trace types */
 tracetarget: LINES
     {
       $<tokens>$ = add_tokens ("t", LINES);
@@ -1278,6 +1299,58 @@ add_tokens (const char *pattern, ...)
   }
 
   return new_list;
+}
+
+/*
+ * Adjust the IF clauses in a line to make separate statements from them.
+ * During parsing, the length of the if statement header includes both
+ * the THEN and ELSE clauses; this needs to be changed to the then_offset.
+ * If the statement did not have an ELSE clause, the else_offset needs to
+ * be changed to the offset of the end of the line.
+ */
+static void
+adjust_if_statements (struct line_header *token_line)
+{
+  struct statement_header *stmt;
+  unsigned short *tp;
+
+  stmt = &token_line->statement[0];
+  char *end_of_line = &((char *) token_line)[token_line->length];
+  while ((char *) stmt < end_of_line) {
+
+    if (stmt->command == IF) {
+      struct if_header *ifstmt = (struct if_header *) stmt;
+      char *end_of_statement = &((char *) stmt)[stmt->length];
+      struct statement_header *then_clause = (struct statement_header *)
+	&((char *) stmt)[ifstmt->then_offset];
+      struct statement_header *else_clause = (struct statement_header *)
+	&((char *) stmt)[ifstmt->else_offset];
+
+      /* If the ELSE offset is the end of the IF statement,
+       * extend it to the end of the line. */
+      if ((char *) else_clause >= end_of_statement) {
+	ifstmt->else_offset = (unsigned short) (end_of_line - (char*) stmt);
+	else_clause = NULL;
+      }
+      /* Cut the length of the IF statement to the THEN offset. */
+      ifstmt->length = ifstmt->then_offset;
+      if (tracing & TRACE_GRAMMAR) {
+	fprintf (stderr, "Adjusted tokens for IF statement at line %d offset %d\n",
+		 token_line->line_number,
+		 (char *) stmt - (char *) &token_line->statement[0]);
+	fprintf (stderr, "    IF clause ");
+	dump_tokens ((unsigned short *) ifstmt);
+	fprintf (stderr, "    THEN clause ");
+	dump_tokens ((unsigned short *) then_clause);
+	if (else_clause) {
+	  fprintf (stderr, "    ELSE clause ");
+	  dump_tokens ((unsigned short *) else_clause);
+	}
+      }
+    }
+
+    stmt = (struct statement_header *) &((char *) stmt)[stmt->length];
+  }
 }
 
 static void
