@@ -84,6 +84,12 @@ find_line (unsigned long number, int after)
 {
   int i;
 
+  if ((signed long) number == -1) {
+    /* The reference is to the immediate (unnumbered) line. */
+    if ((immediate_line != NULL) || !after)
+    return immediate_line;
+  }
+
   for (i = 0; i < program_size; i++)
     {
       if (program[i]->line_number >= number)

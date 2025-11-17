@@ -13,6 +13,7 @@ unsigned long current_data_line;
 unsigned short current_statement;
 unsigned short current_data_statement;
 unsigned short current_data_item;
+struct line_header *immediate_line = NULL;
 
 
 /* Constant data */
@@ -65,6 +66,9 @@ static struct for_stack_s {
   unsigned short var_index;	/* The variable we are interating */
   unsigned long for_line;	/* The line containing the FOR statement */
   unsigned short for_statement;	/* The index of the FOR statement itself */
+  struct statement_header *for_stmt; /* Pointer to the FOR statement for sanity check */
+  unsigned short *to_expr;	/* Token pointer to the TO expression */
+  unsigned short *step_expr;	/* Token pointer to the STEP expression if one exists; else NULL */
 } *for_stack;
 int for_stack_size;
 
@@ -231,21 +235,6 @@ push_sub (void)
 	   sizeof (struct gosub_stack_s) * (gosub_stack_size - 1));
   gosub_stack->previous_line = current_line;
   gosub_stack->previous_statement = current_statement;
-}
-
-/* Push the current program location on the FOR...NEXT stack */
-static void
-push_for (unsigned short var_index)
-{
-  for_stack = (struct for_stack_s *) realloc
-    (for_stack, sizeof (struct for_stack_s) * ++for_stack_size);
-  memmove (&for_stack[1], for_stack,
-	   sizeof (struct for_stack_s) * (for_stack_size - 1));
-  for_stack->var_index = var_index;
-  for_stack->for_line = current_line;
-  /* Make sure we save the FOR statement itself,
-   * NOT the following statement! */
-  for_stack->for_statement = current_statement - 1;
 }
 
 void
@@ -557,6 +546,7 @@ cmd_for (struct statement_header *stmt)
   unsigned short *tp;
   int var;
   double to_value, step_value;
+  struct line_header *line;
 
   /* Get the variable index.  Note that the order of tokens is:
    * FOR: NUMLVAL, IDENTIFIER, name index, '=', NUMEXPR, ...
@@ -568,7 +558,17 @@ cmd_for (struct statement_header *stmt)
 
   /* Push the iteration variable and location of the FOR statement
    * onto the FOR...NEXT stack. */
-  push_for (var);
+  //push_for (var);
+  for_stack = (struct for_stack_s *) realloc
+    (for_stack, sizeof (struct for_stack_s) * ++for_stack_size);
+  for_stack[for_stack_size-1].var_index = var;
+  for_stack[for_stack_size-1].for_line = current_line;
+  /* Make sure we save the FOR statement itself,
+   * NOT the following statement! */
+  for_stack[for_stack_size-1].for_statement = current_statement - 1;
+  for_stack[for_stack_size-1].for_stmt = stmt;
+  for_stack[for_stack_size-1].to_expr = NULL;	/* Will determine after evaluating the initial value */
+  for_stack[for_stack_size-1].step_expr = NULL;	/* Will fill in later if STEP is present */
 
   /* Assign the result of the first expression */
   variable_values[var].num = eval_number (&tp);
@@ -579,8 +579,13 @@ cmd_for (struct statement_header *stmt)
       fputs ("FOR: Missing TO; got ", stderr);
       list_token (--tp, stderr);
       fputc ('\n', stderr);
+      // Pop the stack and abort
+      --for_stack_size;
+      executing = 0;
       return;
     }
+
+  for_stack[for_stack_size-1].to_expr = tp;
 
   /* Evaluate the TO end of the statement */
   to_value = eval_number (&tp);
@@ -596,6 +601,7 @@ cmd_for (struct statement_header *stmt)
 
   if (*tp++ == STEP)
     {
+      for_stack[for_stack_size-1].step_expr = tp;
       /* Evaluate the STEP */
       step_value = eval_number (&tp);
     } else {
@@ -611,10 +617,35 @@ cmd_for (struct statement_header *stmt)
     /* If we're not past the end, proceed normally. */
     return;
 
-  // FIXME: Need to locate the NEXT statement matching this FOR variable!
-  fputs ("ERROR - Terminating the FOR loop prematurely not implemented yet.", stderr);
-  executing = 0;
-
+  // Need to locate the NEXT statement matching this FOR variable
+  while (1)
+    {
+      stmt = find_line_statement(current_line, current_statement);
+      if (stmt == NULL)
+	{
+	  line = (current_line == (unsigned long) -1)
+	    ? NULL : find_line(++current_line, 1);
+	  if (line == NULL)
+	    {
+	      /* End of program */
+	      cmd_end (for_stack[for_stack_size-1].for_stmt);
+	      return;
+	    }
+	  current_line = line->line_number;
+	  current_statement = 0;
+	  stmt = &line->statement[0];
+	}
+      current_statement++;
+      if (stmt->command != NEXT)
+	continue;
+      /* Found a NEXT; see if the variable matches this FOR */
+      var = stmt->tokens[1];
+      if (var != for_stack[for_stack_size-1].var_index)
+	continue;
+      /* Pop the FOR...NEXT stack and continue with the next statement. */
+      --for_stack_size;
+      return;
+    }
 }
 
 void
@@ -630,64 +661,43 @@ cmd_next (struct statement_header *stmt)
   var = stmt->tokens[1];
 
   /* Search the FOR...NEXT stack for the variable. */
-  for (i = 0; i < for_stack_size; i++)
+  for (i = for_stack_size - 1; i >= 0; --i)
     {
       if (for_stack[i].var_index == var)
 	break;
     }
-  if (i >= for_stack_size)
+  if (i < 0)
     {
       printf ("ERROR - NEXT: NOT IN %s LOOP", name_table[var]->contents);
       executing = 0;
       return;
     }
-  if (i)
+  if (i < for_stack_size - 1)
     {
       /* We're bumping off some other FOR loops */
-      memmove (for_stack, &for_stack[i],
-	       sizeof (struct for_stack_s) * (for_stack_size - i));
-      for_stack_size -= i;
+      for_stack_size = i + 1;
     }
 
-  /* Find the original FOR statement that started this loop. */
-  for_stmt = find_line_statement (for_stack->for_line,
-				  for_stack->for_statement);
-  if ((for_stmt == NULL) || (for_stmt->command != FOR))
+  /* Check the original FOR statement that started this loop. */
+  for_stmt = find_line_statement (for_stack[for_stack_size-1].for_line,
+				  for_stack[for_stack_size-1].for_statement);
+  if (for_stmt != for_stack[for_stack_size-1].for_stmt)
     {
       printf ("ERROR - NEXT: LOST FOR %s", name_table[var]->contents);
+      /* Pop the FOR...NEXT stack */
+      --for_stack_size;
       executing = 0;
       return;
     }
 
-  /* Since we don't have the length of the FOR expression,
-   * we'll have to evaluate it again.
-   * Hopefully this won't generate an error or other side effects. */
-  tp = &for_stmt->tokens[5];
-  eval_number (&tp);
-  /* tp should now be pointing to the TO token. */
-  if (*tp++ != TO)
-    {
-      fputs ("FOR: Missing TO; got ", stderr);
-      list_token (--tp, stderr);
-      fputc ('\n', stderr);
-      return;
-    }
-
   /* Evaluate the TO end of the statement */
+  tp = for_stack[for_stack_size-1].to_expr;
   to_value = eval_number (&tp);
-  /* tp should now be pointing to either a STEP token
-   * or an end-of-statement token. */
-  if ((*tp != STEP) && (*tp != '\n') && (*tp != ':') && (*tp != ELSE))
-    {
-      fputs ("FOR: Unrecognized token at end - ", stderr);
-      list_token (tp, stderr);
-      fputc ('\n', stderr);
-      return;
-    }
 
-  if (*tp++ == STEP)
+  if (for_stack[for_stack_size-1].step_expr != NULL)
     {
       /* Evaluate the STEP */
+      tp = for_stack[for_stack_size-1].step_expr;
       step_value = eval_number (&tp);
     } else {
       /* The default step is always 1; some programs depend on this. */
@@ -704,12 +714,11 @@ cmd_next (struct statement_header *stmt)
       : (variable_values[var].num >= to_value))
     {
       /* Return to the statement following the FOR statement */
-      current_line = for_stack->for_line;
-      current_statement = for_stack->for_statement + 1;
+      current_line = for_stack[for_stack_size-1].for_line;
+      current_statement = for_stack[for_stack_size-1].for_statement + 1;
     } else {
       /* The loop has finished.  Pop the FOR...NEXT stack. */
-      memmove (for_stack, &for_stack[1],
-	       sizeof (struct for_stack_s) * --for_stack_size);
+      --for_stack_size;
     }
 }
 

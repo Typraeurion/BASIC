@@ -104,7 +104,9 @@ session:                /* Terminate */
     ;
 
 line: '\n'              /* Do nothing */
-	{ ; }
+	{
+	  current_column = 0;
+	}
     | INTEGER lineofcode '\n' /* Add/change a line in the BASIC program */
 	{
 	  /* Complete the line of code with a newline */
@@ -124,12 +126,14 @@ line: '\n'              /* Do nothing */
 	    fprintf (stderr, "Adding line %d to program\n", $<integer>1);
 	  add_line ($<token_line>$);
 	  /* DO NOT delete this line, since it is now part of the program. */
+	  current_column = 0;
 	}
     | INTEGER '\n'      /* Delete a line in the BASIC program */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Deleting line %d from program\n", $<integer>1);
 	  remove_line ($<integer>1);
+	  current_column = 0;
 	}
     | lineofcode '\n'   /* Execute a line of code immediately */
 	{
@@ -137,14 +141,21 @@ line: '\n'              /* Do nothing */
 	  $<tokens>$ = add_tokens ("*t", $<tokens>1, '\n');
 	  /* See note on IF statements above */
 	  adjust_if_statements ($<token_line>$);
+	  immediate_line = $<token_line>$;
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Executing line of BASIC code\n");
 	  /* Execute this line */
 	  execute ($<token_line>$);
 	  /* We're done with this line, so free the token array */
+	  immediate_line = NULL;
 	  free ($<token_line>$);
+	  current_column = 0;
 	}
-    | error '\n' { /* yyerrok */; } /* Continue reading after an error */
+    | error '\n'
+	{
+	  /* yyerrok */; /* Continue reading after an error */
+	  current_column = 0;
+	}
     ;
 
 lineofcode: statement	/* Create a new line */

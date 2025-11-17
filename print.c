@@ -7,7 +7,7 @@
 
 
 /* Global data */
-static int current_column;
+int current_column;
 
 void
 cmd_print (struct statement_header *stmt)

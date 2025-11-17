@@ -44,8 +44,10 @@ sgets (void)
       new_string->length = next_read;
 
       /* We can stop when we reach a newline */
-      if (new_string->contents[next_read - 1] == '\n')
+      if (new_string->contents[next_read - 1] == '\n') {
+	current_column = 0;
 	break;
+      }
       /* Otherwise, extend the string and read again. */
       current_size += 80;
       new_string = (struct string_value *) realloc
@@ -109,8 +111,10 @@ getdouble (double *value)
   while (isspace (ch = getchar ()))
     {
       /* If the user pressed Enter after typing a number, stop here. */
-      if (ch == '\n')
+      if (ch == '\n') {
+	current_column = 0;
 	return 0;
+      }
     }
 
   /* If the number is followed by a comma, eat it up.

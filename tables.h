@@ -102,7 +102,9 @@ extern unsigned long current_data_line;
 extern unsigned short current_statement;
 extern unsigned short current_data_statement;
 extern unsigned short current_data_item;
+extern struct line_header *immediate_line;
 extern int tracing;
+extern int current_column;
 
 /* Trace flags (bits); the first three are for BASIC language level tracing */
 #define TRACE_LINES 1

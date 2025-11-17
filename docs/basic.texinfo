@@ -667,6 +667,12 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 @code{SIN(@math{@mit@Theta})} computes the sine of @math{@mit@Theta}.
 @findex SQR
 
+@node SQR, TAN, SIN, Trigonometric and Transcendental Functions
+@subsubsection @code{SQR}
+@findex SQR
+
+@code{SQR(@var{X})} computes the square root of @var{X}, or @math{\sqrt{X}}.
+
 @node TAN, String Functions, SQR, Trigonometric and Transcendental Functions
 @subsubsection @code{TAN}
 @findex TAN
@@ -698,7 +704,7 @@ length of @var{A$}, you will get a copy of the entire string.
 @emph{last} @var{N} characters of @var{A$}.  If @var{N} is greater than
 the length of @var{A$}, you will get a copy of the entire string.
 
-@node MID$, Numeric and String Conversion Functions, RIGHT$, String Functions
+@node MID$, TAB, RIGHT$, String Functions
 @subsubsection @code{MID$}
 @findex MID$
 
@@ -709,6 +715,16 @@ a string is numbered 1.  If @var{B} is greater than the length of
 @var{A$}, you will get an empty string.  If @math{B+N} is greater than
 the length of @var{A$}, you will get the right part of @var{A$} starting
 at the @var{B}{@catcode`@^=7 @math{{}^{th}}} character.
+
+@node TAB, Numeric and String Conversion Functions, MID$, String Functions
+@subsubsection @code{TAB}
+@findex TAB
+
+@code{TAB} is a special function that is only available in
+@code{PRINT} statements.  It advances the cursor to the given column
+on the screen; for example @code{PRINT TAB(36);"CENTERED"} will print
+36 spaces (assuming it starts from the left side of the screen) before
+the word ``CENTERED''.
 
 @node Numeric and String Conversion Functions, ASC, MID$, Functions
 @subsection Numeric and String Conversion Functions
@@ -742,8 +758,6 @@ quotation mark (@samp{CHR$(34)}) or certain control characters (i.e.,
 @code{VAL(@var{A$})} converts an @sc{ascii} representation of a number
 into a numerical value.  Note that if @var{A$} does not consist of (or
 at least start with) a number, the resulting value will be zero.
-
-@c To Do: document the functions SEED, SQR, TAB
 
 @node Statements, Remarks, VAL, Top
 @chapter Statements
@@ -1287,6 +1301,22 @@ And the next example will show multiples of @math{\pi}:
 @end example
 @end cartouche
 
+In the event that the initial value of a FOR loop exceeds the TO value
+(with a positive STEP, or if it is less than the TO value with a
+negative STEP) @sc{basic} will skip over the following statements
+until it finds the matching @code{NEXT} statement for the same
+variable, then continue the program after that point.
+
+@cartouche
+@example
+10 LET S=-1
+20 FOR X=0 TO S
+30 PRINT "This line should not be shown"
+40 NEXT X
+50 PRINT "This should be the first line shown"
+@end example
+@end cartouche
+
 @node Program Management, Index, Flow Control, Statements
 @section Program Management
 
@@ -1294,28 +1324,81 @@ And the next example will show multiples of @math{\pi}:
 @subsection Listing Your Program
 @stindex @code{LIST}
 
-@c To Do..
+The @code{LIST} statement displays the contents of your @sc{basic}
+program.  Without any parameters, @code{LIST} will show the entire
+program.
+
+If your program is large, you may want to show just part of the
+program at a time.  With a single numeric argument, @code{LIST} shows
+the specified line.  With two numbers, e.g. @code{LIST 100,199}, it
+shows all lines in that range.
 
 @node SAVE, NEW, LIST, Program Management
 @subsection Saving Your Program
 @cindex storing programs
 @stindex @code{SAVE}
 
-@c To Do..
+To save your program for later use, use the @code{SAVE} command with a
+string giving the name of a file in which to store the program.
+@sc{Basic} will produce a listing of the program like the @code{LIST}
+command, but write it to the named file instead of the screen.
+
+@cartouche
+@example
+SAVE "MyPrograms/example.basic"
+@end example
+@end cartouche
+
+How you name your program files is entirely up to you, but using an
+extension of @file{.basic} or @file{.BASIC} is recommended to identify
+them as @sc{basic} programs.  If you don't use @file{/} at the
+beginning of the name the file is relative to the directory where you
+started @file{basic} from.
 
 @node NEW, LOAD, SAVE, Program Management
 @stindex @code{NEW}
 
-@c To Do..
+To clear the current program from memory, use the @code{NEW} command.
+
+You can also erase individual lines from the program by entering the
+line number without any statements on it.
 
 @node LOAD, Index, NEW, Program Management
 @stindex @code{LOAD}
 
-@c To Do..
+To load a previously saved program back into memory, use the
+@code{LOAD} command with a string giving the name of the file
+containing the program listing.  @sc{Basic} will read this file just
+as if it were being typed into the console.  This means the file may
+even contain unnumbered statements for immediate execution; for
+example a program file may end with the line ``@code{RUN}'' to run the
+program immediately after it finishes loading.
+
+@cartouche
+@example
+LOAD "MyPrograms/example.basic"
+@end example
+@end cartouche
+
+If you already have a program in memory, you may want to clear it
+first with @code{NEW} before loading the new program; otherwise the
+new code being loaded will be merged with any existing code.  This can
+be useful for example if you have modifications to a program in a
+separate file from the original code.  The sample program ``Animal''
+is a good example of this; the game can be extended by adding more
+@code{DATA} lines with additional questions and answers.
+
+@cartouche
+@example
+NEW
+LOAD "examples/Animal.BASIC"
+LOAD "examples/Animal.more"
+@end example
+@end cartouche
 
 
 @c To Do: document the commands DEF,
-@c        LIST, LOAD, NEW, ON, SAVE, TRACE
+@c        ON, TRACE
 
 @node Index, Index of Statements, , Top
 @unnumbered Index
