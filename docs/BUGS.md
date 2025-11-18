@@ -10,6 +10,14 @@
 * `DEF` (define function) is not yet implemented.  It is recognized by
   the parser though.
 
-* It is currently an error to reference an array variable without
-  first declaring it with a `DIM` statement.  In Dartmouth basic,
-  undeclared arrays had a default dimension of 10.
+* Dartmouth BASIC allowed PRINT statements to contain string constants
+  next to variables without any `;` separator, which was treated the
+  same as `;`.  This would be difficult to add to the Bison grammar,
+  so this version of BASIC does not support it.
+
+* When a parse or syntax error occurs, the interpreter does not
+  indicate where in the line the error was detected.  If the line was
+  numbered, the content of the line is not added to the program so it
+  can be lost entirely when loading a program from a file.  The parser
+  _should_ save the line with the leading token `ERROR` but I haven't
+  yet figured out how to get the failed line from the parser.

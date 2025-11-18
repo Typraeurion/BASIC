@@ -354,21 +354,25 @@ your program.
 At times you may wish to have a large set of related variables, for
 example elements in a vector.  For this purpose, you can define a
 @dfn{variable array}, which is like a list of values.  Unlike simple
-variables, which you can make up and use as you need them, an array must
-be defined ahead of time so that @sc{basic} knows how big it is.  This
-is done with the @code{DIM} (@sc{dim}ension) statement:
+variables, which you can make up and use as you need them, an array
+should be defined ahead of time so that @sc{basic} knows how big it
+is.  This is done with the @code{DIM} (@sc{dim}ension) statement:
 
 @cartouche
 @example
-10 DIM X(10),Y(10)
+10 DIM X(20),Y(20)
 @end example
 @end cartouche
 
-This example defines two arrays, @var{X} and @var{Y}, having ten
+This example defines two arrays, @var{X} and @var{Y}, having twenty
 elements each.  To use a particular element of an array, just give the
 array `subscript' in parentheses, as in @samp{X(1)} or @samp{Y(4)}.  The
 subscript can even be another variable or an arithmetic expression, as
 in @samp{X(2*N-1)}.
+
+If you use an array variable without first giving its
+@code{DIM}ension, @sc{basic} will create it with a default dimension
+of 10 elements.
 
 Variable arrays are distinct from simple variables, so you could, if you
 wanted to, use both @var{X} and @var{X(N)} in your program; the value of

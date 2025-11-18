@@ -41,6 +41,7 @@ static void dump_tokens (unsigned short *);
 %token DIM
 %token ELSE
 %token END
+%token ERROR
 %token EXPRESSIONS
 %token FOR
 %token GOSUB
@@ -149,6 +150,18 @@ line: '\n'              /* Do nothing */
 	  /* We're done with this line, so free the token array */
 	  immediate_line = NULL;
 	  free ($<token_line>$);
+	  current_column = 0;
+	}
+    | INTEGER error '\n'
+	{
+	  /* Handle the case where an error occurs on
+	   * a numbered line by saving the line text */
+	  // FIXME: How do we obtain the original (unparsed) line?
+	  /* $<tokens>$ = add_tokens ("ttst", ERROR, RESTOFLINE, ???, '\n');
+	  $<token_line>$->line_number = $<integer>1;
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Adding line %d to program\n", $<integer>1);
+	  add_line ($<token_line>$); */
 	  current_column = 0;
 	}
     | error '\n'
@@ -1169,9 +1182,9 @@ dimdecl: IDENTIFIER '(' arrayindex ')'
 /* Additional C code */
 
 void
-yyerror (const char *msg)
+yyerror (const char *message)
 {
-  fprintf (stderr, "\007Parse error: %s\n", msg);
+  fprintf (stderr, "\007Parse error: %s\n", message);
   /*  fputs ("Aborting line\n", stderr);
       longjmp (return_point, 1); */
 }

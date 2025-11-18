@@ -1,0 +1,6 @@
+10 INPUT "HORIZONTAL SIZE";X
+20 INPUT "VERTICAL SIZE";Y
+REM No documentation on this variable; if > "P", the banner is offset
+REM horizontally by the inverse of the length of the character(s) printed.
+21 INPUT "CENTEED (Y/N)";L$
+35 INPUT "SET PAGE (PRESS ENTER TO START PRINTING)";O$

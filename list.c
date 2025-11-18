@@ -34,6 +34,7 @@ const struct {
   { ELSE, " ELSE " },
   { EXPRESSIONS, "EXPRESSIONS " },
   { END, "END" },
+  { ERROR, "ERROR" },
   { FOR, "FOR " },
   { GOSUB, "GOSUB " },
   { GOTO, "GOTO " },

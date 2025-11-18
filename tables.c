@@ -118,7 +118,11 @@ find_function (unsigned short id)
   return NULL;
 }
 
-/* Common routine to evaluate a list of indices */
+/* Common routine to evaluate a list of indices.
+ * `index_list' is the list of expressions for the indices;
+ * the evaluated values will be stored in `indices'.
+ * Returns 0 if all indices were evaluated successfully,
+ * or -1 if an error occurred. */
 static int
 get_indices (struct list_header *index_list, unsigned short *indices,
 	     int nargs, int dim_or_index)
@@ -132,9 +136,10 @@ get_indices (struct list_header *index_list, unsigned short *indices,
     {
       /* We don't give this error for DIM, since DIM defines the dimensions */
       if (current_line == (unsigned long) -1)
-	printf ("ERROR - WRONG NUMBER OF INDICES");
+	printf ("ERROR - WRONG NUMBER OF INDICES\n");
       else
-	printf ("ERROR - WRONG NUMBER OF INDICES ON LINE %d", current_line);
+	printf ("ERROR - WRONG NUMBER OF INDICES ON LINE %d\n", current_line);
+      current_column = 0;
       executing = 0;
       return -1;
     }
@@ -146,10 +151,11 @@ get_indices (struct list_header *index_list, unsigned short *indices,
       if (*tp == STREXPR)
 	{
 	  if (current_line == (unsigned long) -1)
-	    printf ("ERROR - INDEX #%d IS NOT A NUMBER", i + 1);
+	    printf ("ERROR - INDEX #%d IS NOT A NUMBER\n", i + 1);
 	  else
-	    printf ("ERROR - INDEX #%d IS NOT A NUMBER ON LINE %d",
+	    printf ("ERROR - INDEX #%d IS NOT A NUMBER ON LINE %d\n",
 		    i + 1, current_line);
+	  current_column = 0;
 	  executing = 0;
 	  return -1;
 	}
@@ -165,14 +171,15 @@ get_indices (struct list_header *index_list, unsigned short *indices,
 	{
 	  if (current_line == (unsigned long) -1)
 	    printf ((dim_or_index == DIM)
-		    ? "ERROR - DIMENSION #%d OUT OF RANGE"
-		    : "ERROR - INDEX #%d OUT OF RANGE", i + 1);
+		    ? "ERROR - DIMENSION #%d OUT OF RANGE\n"
+		    : "ERROR - INDEX #%d OUT OF RANGE\n", i + 1);
 	  else
 	    printf ((dim_or_index == DIM)
-		    ? "ERROR - DIMENSION #%d OUT OF RANGE ON LINE %d"
-		    : "ERROR - INDEX #%d OUT OF RANGE ON LINE %d",
+		    ? "ERROR - DIMENSION #%d OUT OF RANGE ON LINE %d\n"
+		    : "ERROR - INDEX #%d OUT OF RANGE ON LINE %d\n",
 		    i + 1, current_line);
 	  executing = 0;
+	  current_column = 0;
 	  return -1;
 	}
       indices[i] = (unsigned short) d;
@@ -241,17 +248,18 @@ get_arguments (struct list_header *arg_list, var_u *args,
 }
 
 
-/* Define a variable as an array. */
-static void
-dim (unsigned short id, struct list_header *size_list)
+/* Define a variable as an array.  The number of dimensions
+ * and size of each dimension are given directly.
+ * Returns the new array if it was successfully allocated
+ * or NULL on error. */
+static struct fndef *
+_dim_internal (unsigned short id,
+	       int num_dimensions,
+	       const unsigned short *dim_size)
 {
-  int i, dimensions;
+  int i;
   struct fndef *array;
-  struct list_item *lp;
-  unsigned short *tp;
-  unsigned short dimension[32];
   unsigned long total_size;
-  double d;
 
   /* If this variable is already being used, remove the current definition */
   array = find_function (id);
@@ -262,7 +270,7 @@ dim (unsigned short id, struct list_header *size_list)
 	  printf ("ERROR - DIM: %s IS A FUNCTION\n",
 		  name_table[array->name_index]->contents);
 	  executing = 0;
-	  return;
+	  return NULL;
 	}
       free_function (array);
     } else {
@@ -277,25 +285,21 @@ dim (unsigned short id, struct list_header *size_list)
 	? '$' : 0;
     }
 
-  /* Get the dimensions of the array */
-  array->num_args = dimensions = size_list->num_items;
-  if (get_indices (size_list, dimension, dimensions, DIM))
-    return;
-
+  array->num_args = num_dimensions;
   total_size = 1;
-  for (i = 0; i < dimensions; i++)
+  for (i = 0; i < num_dimensions; i++)
     {
       /* 1 million elements seems to be
        * a reasonable maximum limit for BASIC data */
-      if (total_size >= (1 << 20) / ((unsigned int) dimension[i] + 1))
+      if (total_size >= (1 << 20) / ((unsigned int) dim_size[i] + 1))
 	{
 	  puts ("ERROR - DIM: ARRAY TOO BIG");
 	  executing = 0;
-	  return;
+	  return NULL;
 	}
       /* The *real* dimension is d+1, since BASIC programs
        * may start indices at 0 as well as 1. */
-      total_size *= (unsigned int) dimension[i] + 1;
+      total_size *= (unsigned int) dim_size[i] + 1;
     }
 
   /* Allocate the array */
@@ -307,7 +311,7 @@ dim (unsigned short id, struct list_header *size_list)
     {
       puts ("ERROR - DIM: OUT OF MEMORY");
       executing = 0;
-      return;
+      return NULL;
     }
   /* If this is a numeric array, initialize the elements to 0.0 */
   if (!array->type)
@@ -319,9 +323,31 @@ dim (unsigned short id, struct list_header *size_list)
 
   /* Copy the dimensions */
   array->array_dimension = (unsigned short *) malloc
-    (sizeof (short) * dimensions);
-  memcpy (array->array_dimension, dimension, sizeof (short) * dimensions);
+    (sizeof (short) * num_dimensions);
+  memcpy (array->array_dimension, dim_size, sizeof (short) * num_dimensions);
   array->argtypes = 0;
+
+  return array;
+}
+
+/* Define a variable as an array.  The sizes are
+ * given in a list of tokens to be evaluated. */
+static void
+dim (unsigned short id, struct list_header *size_list)
+{
+  int dimensions;
+  // struct fndef *array;
+  // struct list_item *lp;
+  // unsigned short *tp;
+  unsigned short dimension[32];
+  // double d;
+
+  /* Get the dimensions of the array */
+  dimensions = size_list->num_items;
+  if (get_indices (size_list, dimension, size_list->num_items, DIM))
+    return;
+
+  _dim_internal (id, size_list->num_items, dimension);
 }
 
 
@@ -341,10 +367,11 @@ array_lookup (struct fndef *array, unsigned short *index_list)
       if (index_list[i] > array->array_dimension[i])
 	{
 	  if (current_line == (unsigned long) -1)
-	    printf ("ERROR - INDEX #%d OUT OF RANGE", i + 1);
+	    printf ("ERROR - INDEX #%d OUT OF RANGE\n", i + 1);
 	  else
-	    printf ("ERROR - INDEX #%d OUT OF RANGE ON LINE %d",
+	    printf ("ERROR - INDEX #%d OUT OF RANGE ON LINE %d\n",
 		    i + 1, current_line);
+	  current_column = 0;
 	  executing = 0;
 	  return -1;
 	}
@@ -359,6 +386,13 @@ array_lookup (struct fndef *array, unsigned short *index_list)
   return total_index;
 }
 
+/* List of dimensions used for default array initialization.
+ * We support a maximum of 1 million entries (technically 1,048,576)
+ * which means we can only have 5 dimensions of the default size. */
+const unsigned short SIZE_TEN[10] = {
+  10, 10, 10, 10, 10, 10, 10, 10
+};
+
 double *
 num_array_lookup (unsigned short id, struct list_header *index_list)
 {
@@ -370,9 +404,11 @@ num_array_lookup (unsigned short id, struct list_header *index_list)
   array = find_function (id);
   if ((array == NULL) || (array->array_dimension == NULL))
     {
-      printf ("ERROR - %s IS NOT AN ARRAY", name_table[id]->contents);
-      executing = 0;
-      return NULL;
+      /* The original BASIC allowed undimensioned arrays
+       * with a default size of 10 */
+      array = _dim_internal (id, index_list->num_items, SIZE_TEN);
+      if (array == NULL)
+	return NULL;
     }
   if (array->type == '$')
     {
@@ -401,9 +437,11 @@ str_array_lookup (unsigned short id, struct list_header *index_list)
   array = find_function (id);
   if ((array == NULL) || (array->array_dimension == NULL))
     {
-      printf ("ERROR - %s IS NOT AN ARRAY", name_table[id]->contents);
-      executing = 0;
-      return NULL;
+      /* The original BASIC allowed undimensioned arrays
+       * with a default size of 10 */
+      array = _dim_internal (id, index_list->num_items, SIZE_TEN);
+      if (array == NULL)
+	return NULL;
     }
   if (array->type != '$')
     {
