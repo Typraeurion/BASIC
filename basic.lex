@@ -95,7 +95,7 @@ BYE	{
   return BYE;
 }
 
-CONTINUE	{
+CONT("."|INUE)	{
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed CONTINUE command\n");
   return CONTINUE;
@@ -131,7 +131,7 @@ END	{
   return END;
 }
 
-EXPRESSIONS	{
+EXPR("."|ESSIONS)	{
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed EXPRESSIONS token\n");
   return EXPRESSIONS;
@@ -257,7 +257,7 @@ RETURN	{
   return RETURN;
 }
 
-REM	{
+REM("."|ARK)?	{
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed REM command\n");
   BEGIN(REMark);

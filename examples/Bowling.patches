@@ -1,1 +1,47 @@
+REM Besides fixing a syntax issue on line 3600, this patch contains some
+REM additional changes.  First there is a bug in holding the scores
+REM where the original code used a primary index of <frame> * <player #>
+REM which results in overlapping elements (e.g. player 2 frame 3 shares
+REM the same cell as player 1 frame 6 and player 3 frame 2).  This is fixed
+REM by changing A to a 3-dimensional array (<player>,<frame>,<ball / result>).
+REM Second, we'll let the user enter a name for each player.
+820 Z$=UPPER$(Z$)
+1630 DIM N$(R)
+1640 FOR P=1 TO R
+1650 PRINT "PLAYER";P;"'S NAME";
+1660 INPUT N$(P)
+1670 IF LEN(N$(P)) > 0 THEN NEXT P:GOTO 1710
+1680 PRINT "I DIDN'T GET A NAME..."
+1690 GOTO 1650
+1810 DIM A(R,11,3)
+1870 FOR I=1 TO R: FOR J=1 TO 11: FOR K=1 TO 3
+1880 A(I,J,K)=0
+1890 NEXT K: NEXT J: NEXT I
+2610 PRINT N$(P);", PRESS ENTER TO GET THE BALL GOING."
 3600 PRINT "PLAYER:";P;"FRAME:";F;"BALL:";B
+REM Note: the 3rd element of A(<player>,<frame>,3) indicates the type of
+REM bonus for the frame: 1="error" (at least 1 pin still standing),
+REM 2="spare", 3="strike".
+6390 A(P,F,B)=D
+6840 A(P,F,B)=D-M
+7020 A(P,F,3)=Q
+7460 IF I < 10 THEN PRINT " ";
+7660 PRINT
+7750 PRINT N$(P);" (PLAYER";P;")"
+8000 IF A(P,J,I) < 10 THEN PRINT " ";
+8010 PRINT A(P,J,I);
+8460 PRINT "DO YOU WANT ANOTHER GAME";
+8560 A$=UPPER$(A$)
+8640 IF LEFT$(A$,1)="Y" THEN 1530
+
+REM Additional fixes needed:
+REM This program does not currently compute the running or total scores.
+REM There are two types of scoring we could implement: traditional or
+REM World Bowling.  World Bowling is easier: a strike is 30 points,
+REM and a spare is 10 + the number of pins knocked down on the first roll
+REM in the same frame.  Traditional scoring requires holding the score
+REM for the next one or two rolls; a spare is 10 + the number of pins
+REM knocked down on the first roll of the NEXT frame, while a strike is
+REM 10 + the number of pins knocked down on the next two rolls which
+REM may be in the next one or two frames (in case the next frame is also
+REM a strike).

@@ -1,4 +1,5 @@
 /* Pre-defined functions in BASIC */
+#include <ctype.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -22,6 +23,7 @@ var_u fn_int (var_u *);
 var_u fn_left (var_u *);
 var_u fn_len (var_u *);
 var_u fn_log (var_u *);
+var_u fn_lower (var_u *);
 var_u fn_mid (var_u *);
 var_u fn_rnd (var_u *);
 var_u fn_seed (var_u *);
@@ -31,6 +33,7 @@ var_u fn_sin (var_u *);
 var_u fn_sqr (var_u *);
 var_u fn_str (var_u *);
 var_u fn_tan (var_u *);
+var_u fn_upper (var_u *);
 var_u fn_val (var_u *);
 
 struct {
@@ -49,6 +52,7 @@ struct {
   { "LEFT$", 2, fn_left, 1 },
   { "LEN", 1, fn_len, 1 },
   { "LOG", 1, fn_log, 0 },
+  { "LOWER$", 1, fn_lower, 1 },
   { "MID$", 3, fn_mid, 1 },
   { "RND", 1, fn_rnd, 0 },
   { "SEED", 1, fn_seed, 0 },
@@ -58,6 +62,7 @@ struct {
   { "SQR", 1, fn_sqr, 0 },
   { "STR$", 1, fn_str, 0 },
   { "TAN", 1, fn_tan, 0 },
+  { "UPPER$", 1, fn_upper, 1 },
   { "VAL", 1, fn_val, 1 },
 };
 #define NUM_INITIALIZERS \
@@ -184,6 +189,24 @@ var_u fn_len (var_u *args)
 var_u fn_log (var_u *args)
 {
   return (var_u) log (args[0].num);
+}
+
+var_u fn_lower (var_u *args)
+{
+  int i, len;
+  struct string_value *new_str;
+
+  if (args[0].str == NULL)
+    return args[0];
+
+  len = args[0].str->length;
+  new_str = (struct string_value *) calloc
+    (1, WALIGN (sizeof (struct string_value) + len));
+  new_str->length = len;
+  for (i = 0; i < len; i++)
+    new_str->contents[i] = tolower(args[0].str->contents[i]);
+
+  return (var_u) new_str;
 }
 
 var_u fn_mid (var_u *args)
@@ -327,6 +350,24 @@ var_u fn_tan (var_u *args)
       && (result.num > -2.3283064365387e-10))
     result.num = 0.0;
   return result;
+}
+
+var_u fn_upper (var_u *args)
+{
+  int i, len;
+  struct string_value *new_str;
+
+  if (args[0].str == NULL)
+    return args[0];
+
+  len = args[0].str->length;
+  new_str = (struct string_value *) calloc
+    (1, WALIGN (sizeof (struct string_value) + len));
+  new_str->length = len;
+  for (i = 0; i < len; i++)
+    new_str->contents[i] = toupper(args[0].str->contents[i]);
+
+  return (var_u) new_str;
 }
 
 var_u fn_val (var_u *args)
