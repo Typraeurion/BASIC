@@ -79,7 +79,12 @@ signed int current_load_nesting = 0;
 
 "\n"|"$"|"("|")"|"*"|"+"|","|"-"|"/"|":"|";"|"<"|"="|">"|"^"	{
   if (tracing & TRACE_PARSER)
-    fprintf (stderr, "Parsed symbol '%c'", yytext[0]);
+    {
+      if (yytext[0] == '\n')
+	fprintf (stderr, "Parsed newline symbol\n");
+      else
+	fprintf (stderr, "Parsed symbol '%c'\n", yytext[0]);
+    }
   return yytext[0];
 }
 

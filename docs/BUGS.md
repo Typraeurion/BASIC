@@ -10,6 +10,11 @@
 * `DEF` (define function) is not yet implemented.  It is recognized by
   the parser though.
 
+* `NEXT` does not support more than one variable in the same
+  statement.  It appears that this feature was introduced in Altair
+  BASIC (by Microsoft) in 1975, and was not a part of the original
+  language but became common in other Microsoft dialects.
+
 * When a parse or syntax error occurs, the interpreter does not
   indicate where in the line the error was detected.  If the line was
   numbered, the content of the line is not added to the program so it

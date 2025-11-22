@@ -737,6 +737,8 @@ arithexpr: number
     | numvariable
     | '(' numexpression ')'
     {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Parenthesized numeric expression\n");
       /* Enlarge the token list to include both parentheses. */
       $<tokens>$ = add_tokens ("t*t", '(', $<tokens>2, ')');
     }
@@ -791,7 +793,8 @@ arithexpr: number
     }
     ;
 
-condexpr:
+condexpr: arithexpr
+    |
       arithexpr '=' arithexpr
     {
       if (tracing & TRACE_GRAMMAR)
