@@ -734,10 +734,14 @@ at the @var{B}{@catcode`@^=7 @math{{}^{th}}} character.
 @findex TAB
 
 @code{TAB} is a special function that is only available in
-@code{PRINT} statements.  It advances the cursor to the given column
-on the screen; for example @code{PRINT TAB(36);"CENTERED"} will print
-36 spaces (assuming it starts from the left side of the screen) before
-the word ``CENTERED''.
+@code{PRINT} statements (@ref{PRINT}).  It advances the cursor to the
+given column on the screen; for example @code{PRINT
+TAB(36);"CENTERED"} will print 36 spaces (assuming it starts from the
+left side of the screen) before the word ``CENTERED''.
+
+If you end a @code{PRINT} command with @code{TAB}, it will remain at
+the given column rather than advance to the next line the same as if
+you had ended it with a semicolon (@code{;}).
 
 @node UPPER$, Numeric and String Conversion Functions, TAB, String Functions
 @subsubsection @code{UPPER$}
@@ -984,6 +988,11 @@ later in the program will continue printing on that same line.
 Remember to add a space at the end of a string if it will be followed
 by a variable value, otherwise they will be mashed together like
 ``@dots is1.41421'' instead of ``@dots is 1.41421''.
+
+Likewise if you end @code{PRINT} with a @code{TAB} (@pxref{TAB}),
+@sc{basic} will leave the cursor at the given column instead of going
+to the next line so the next @code{PRINT} will start from that
+position.
 
 You can space items out in the output at tab stops by separating them
 with a comma instead of a semicolon.  The comma causes the output to

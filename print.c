@@ -57,6 +57,12 @@ cmd_print (struct statement_header *stmt)
 	      printf ("%*s", (int) num - current_column, "");
 	      current_column = (int) num;
 	    }
+	  /* If we're already past the given column, go to a new line. */
+	  else if ((int) num < current_column)
+	    {
+	      printf ("\n%*s", (int) num, "");
+	      current_column = (int) num;
+	    }
 	  break;
 
 	case NUMEXPR:
@@ -75,6 +81,18 @@ cmd_print (struct statement_header *stmt)
 	  tp++;
 	  str = eval_string (&tp);
 	  current_column += printf ("%s", str->contents);
+	  /* If the string contained any CR or NL character, we need
+	   * to do extra work to figure out which column we're at. */
+	  if (strchr(str->contents, '\r') || strchr(str->contents, '\n'))
+	    {
+	      char *tail = strrchr(str->contents, '\r');
+	      if (tail == NULL)
+		tail = str->contents;
+	      char *tail2 = strrchr(tail, '\n');
+	      if (tail2 == NULL)
+		tail2 = tail;
+	      current_column = strlen(tail2);
+	    }
 	  /* The string is just temporary; release it now that we're done */
 	  free (str);
 	  break;
@@ -88,10 +106,12 @@ cmd_print (struct statement_header *stmt)
       lp = (struct list_item *) &((char *) lp)[lp->length];
     }
 
-  /* If the last print item was not a ',' or ';' separator, end with a newline. */
+  /* If the last print item was not a ',' or ';' separator,
+   * nor a TAB function, end with a newline. */
   switch ((int) last_token) {
   case ',':
   case ';':
+  case TAB:
     break;
   default:
     fputc ('\n', stdout);
