@@ -692,13 +692,22 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 
 @code{LEN(@var{A$})} returns the length of the string @var{A$}.
 
-@node LEFT$, RIGHT$, LEN, String Functions
+@node LEFT$, LOWER$, LEN, String Functions
 @subsubsection @code{LEFT$}
 @findex LEFT$
 
 @code{LEFT$(@var{A$},@var{N})} makes a new string consisting of the
 first @var{N} characters of @var{A$}.  If @var{N} is greater than the
 length of @var{A$}, you will get a copy of the entire string.
+
+@node LOWER$, RIGHT$, LEFT$, String Functions
+@subsubsection @code{LOWER$}
+@findex LOWER$
+
+@code{LOWER$(@var{A$})} makes a new string that is a copy of @var{A$}
+with all upper case characters converted to lower case.  This function
+is not a part of the original @sc{basic}s, but was added because
+typing in lower case is much more common on modern computers.
 
 @node RIGHT$, MID$, LEFT$, String Functions
 @subsubsection @code{RIGHT$}
@@ -720,7 +729,7 @@ a string is numbered 1.  If @var{B} is greater than the length of
 the length of @var{A$}, you will get the right part of @var{A$} starting
 at the @var{B}{@catcode`@^=7 @math{{}^{th}}} character.
 
-@node TAB, Numeric and String Conversion Functions, MID$, String Functions
+@node TAB, UPPER$, MID$, String Functions
 @subsubsection @code{TAB}
 @findex TAB
 
@@ -730,7 +739,18 @@ on the screen; for example @code{PRINT TAB(36);"CENTERED"} will print
 36 spaces (assuming it starts from the left side of the screen) before
 the word ``CENTERED''.
 
-@node Numeric and String Conversion Functions, ASC, MID$, Functions
+@node UPPER$, Numeric and String Conversion Functions, TAB, String Functions
+@subsubsection @code{UPPER$}
+@findex UPPER$
+
+@code{UPPER$(@var{A$})} makes a new string that is a copy of @var{A$}
+with all lower case characters converted to upper case.  This function
+is not a part of the original @sc{basic}s, but was added because
+typing in lower case is much more common on modern computers, but
+older @sc{basic} programs typically expect input to be in upper case
+and string comparisons are case-sensitive.
+
+@node Numeric and String Conversion Functions, ASC, String Functions, Functions
 @subsection Numeric and String Conversion Functions
 
 @node ASC, CHR$, Numeric and String Conversion Functions, Numeric and String Conversion Functions
@@ -790,6 +810,12 @@ remove a line of statements from the program.)
 Remarks help document what the program is doing.  You should sprinkle
 these statements liberally throughout your program so that another
 person reading the code later on can understand it more easily.
+
+Some early versions of @sc{basic} supported the longer keyword
+``@code{REMARK}'' as well as its 3-letter abbreviation, so this
+version of @sc{basic} supports this as well as ``@code{REM.}'' for
+entering but will shorten it to the standard @code{REM} keyword in the
+program listing.
 
 @node Working With Data, Input and Output, Remarks, Statements
 @section Working With Data
@@ -947,6 +973,11 @@ semicolon to have them printed adjacent to each other.
 @end example
 @end cartouche
 
+@emph{In some early versions of @sc{basic}, using the semicolon to
+separate strings and variables in @code{PRINT} was optional.  This
+@sc{basic} supports that syntax, but we encourage using the semicolon
+for readability.}
+
 If you end the @code{PRINT} statement with a semicolon, @sc{basic}
 will not start a new line at the end; another @code{PRINT} statement
 later in the program will continue printing on that same line.
@@ -970,6 +1001,32 @@ The output from the above statement will look like:
 @cartouche
 @example
 The first prime numbers are     2       3       5       7
+@end example
+@end cartouche
+
+You may also begin the @code{PRINT} statement with a comma to advance
+to the next tab stop before printing the next item, or use several
+commas in a row to advance multiple tab stops.
+
+@cartouche
+@example
+10 PRINT "Flush left"
+12 PRINT ,"Tab"
+14 PRINT ,,"Tab"
+16 PRINT ,,,"Tab"
+18 PRINT ,,,,"Tab"
+@end example
+@end cartouche
+
+The output from running the above program will be:
+
+@cartouche
+@example
+Flush left
+        Tab
+                Tab
+                        Tab
+                                Tab
 @end example
 @end cartouche
 
@@ -1146,6 +1203,9 @@ After a program has stopped in this way, the @code{CONTINUE} statement
 resumes running the program from the next statement.  If the program
 was finished (either by reaching the end of the program or using the
 @code{END} statement), @code{CONTINUE} does nothing.
+
+For convenience, the @code{CONTINUE} command may be abbreviated as
+``@code{CONT.}''.
 
 @node IF, ELSE, STOP and CONTINUE, Flow Control
 @subsection Conditional code: @code{IF}

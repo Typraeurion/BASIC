@@ -216,32 +216,34 @@ list_token (unsigned short *tp, FILE *to)
 
     case ITEMLIST:
       {
-	/* Recursively list the tokens in this list. */
+	/* Recursively list the tokens and separators in this list. */
 	int j, k;
+	struct list_header *lhp;
 	struct list_item *lip;
 
 #ifdef DEBUG
 	fputc ('[', to);
 #endif
 	tp++;
-	lip = &((struct list_header *) tp)->item[0];
-	for (j = 0; j < ((struct list_header *) tp)->num_items; j++)
+	lhp = (struct list_header *) tp;
+	lip = &lhp->item[0];
+	for (j = 0; j < lhp->num_items; j++)
 	  {
 	    for (k = 0; k < ((lip->length - sizeof (struct list_item))
 			     / sizeof (short)); )
-	      {
 		k += list_token (&lip->tokens[k], to);
-	      }
-	    if ((char *) &lip->tokens[k]
-		>= &((char *) tp)[((struct list_header *) tp)->length])
+	    if ((char *) &lip->tokens[k] >= &((char *) tp)[lhp->length])
 	      break;
+	    /* This should be the separator; it's
+	     * not included in the list item length. */
 	    fputc (lip->tokens[k++], to);
-	    lip = (struct list_item *) &lip->tokens[k];
+	    lip = (struct list_item *)
+	      &((char *) lip)[lip->length + sizeof(short)];
 	  }
 #ifdef DEBUG
 	fputc (']', to);
 #endif
-	return (((struct list_header *) tp)->length / sizeof (short) + 1);
+	return (lhp->length / sizeof (short) + 1);
       }
 
     case NUMEXPR:
@@ -249,6 +251,34 @@ list_token (unsigned short *tp, FILE *to)
       fputs ("<#>", to);
 #endif
       return 1;
+
+    case PRINTLIST:
+      {
+	/* Recursively list the tokens in this list */
+	int j, k;
+	struct list_header *lhp;
+	struct list_item *lip;
+
+#ifdef DEBUG
+	fputc ('[', to);
+#endif
+	tp++;
+	lhp = (struct list_header *) tp;
+	lip = &lhp->item[0];
+	for (j = 0; j < lhp->num_items; j++)
+	  {
+	    for (k = 0; k < ((lip->length - sizeof (struct list_item))
+			     / sizeof (short)); )
+	      k += list_token (&lip->tokens[k], to);
+	    if ((char *) &lip->tokens[k] >= &((char *) tp)[lhp->length])
+	      break;
+	    lip = (struct list_item *) &((char *) lip)[lip->length];
+	  }
+#ifdef DEBUG
+	fputc (']', to);
+#endif
+	return (lhp->length / sizeof (short) + 1);
+      }
 
     case STREXPR:
 #ifdef DEBUG

@@ -17,11 +17,12 @@ cmd_print (struct statement_header *stmt)
   struct string_value *str;
   double num;
   int i, items;
+  unsigned short last_token = 0;
 
   /* If there is no print list in this statement,
    * print a blank line. */
   tp = &stmt->tokens[0];
-  if (*tp != ITEMLIST)
+  if (*tp != PRINTLIST)
     {
       fputc ('\n', stdout);
       current_column = 0;
@@ -33,8 +34,19 @@ cmd_print (struct statement_header *stmt)
   for (i = 0; i < items; i++)
     {
       tp = &lp->tokens[0];
-      switch ((int) *tp)
+      last_token = *tp;
+      switch ((int) last_token)
 	{
+	case ';':
+	  /* Semantic separator; no output */
+	  break;
+
+	case ',':
+	  /* Skip to the next tab stop */
+	  printf ("%*s", ((current_column + 8) & ~7) - current_column, "");
+	  current_column = (current_column + 8) & ~7;
+	  break;
+
 	case TAB:
 	  /* Skip past the open parenthesis, evaluate the numeric argument */
 	  tp += 2;
@@ -72,33 +84,17 @@ cmd_print (struct statement_header *stmt)
 	  list_token (tp, stderr);
 	}
 
-      /* Find out which separator is being used */
-      tp = (unsigned short *) &((char *) lp)[lp->length];
-      switch ((int) *tp)
-	{
-	case ':':
-	case '\n':
-	case ELSE:
-	  /* End of statement; print a newline */
-	  fputc ('\n', stdout);
-	  current_column = 0;
-
-	case ';':
-	  /* Keep the following text together */
-	  break;
-
-	case ',':
-	  /* Skip to the next tab stop */
-	  printf ("%*s", ((current_column + 8) & ~7) - current_column, "");
-	  current_column = (current_column + 8) & ~7;
-	  break;
-
-	default:
-	  fputs ("cmd_print(): Unknown separator in print string - ", stderr);
-	  list_token (tp, stderr);
-	}
-
       /* Next item */
-      lp = (struct list_item *) ++tp;
+      lp = (struct list_item *) &((char *) lp)[lp->length];
     }
+
+  /* If the last print item was not a ',' or ';' separator, end with a newline. */
+  switch ((int) last_token) {
+  case ',':
+  case ';':
+    break;
+  default:
+    fputc ('\n', stdout);
+    current_column = 0;
+  }
 }

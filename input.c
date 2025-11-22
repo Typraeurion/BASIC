@@ -526,7 +526,7 @@ cmd_read (struct statement_header *stmt)
 	    }
 
 	  /* Reset the data list and data item pointers */
-	  data_list = (struct list_header *) &data_stmt->tokens[3];
+	  data_list = (struct list_header *) &data_stmt->tokens[1];
 	  data_item = &data_list->item[0];
 	}
     }

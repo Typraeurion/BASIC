@@ -10,11 +10,6 @@
 * `DEF` (define function) is not yet implemented.  It is recognized by
   the parser though.
 
-* Dartmouth BASIC allowed PRINT statements to contain string constants
-  next to variables without any `;` separator, which was treated the
-  same as `;`.  This would be difficult to add to the Bison grammar,
-  so this version of BASIC does not support it.
-
 * When a parse or syntax error occurs, the interpreter does not
   indicate where in the line the error was detected.  If the line was
   numbered, the content of the line is not added to the program so it

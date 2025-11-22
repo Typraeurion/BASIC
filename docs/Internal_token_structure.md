@@ -71,12 +71,25 @@ pointer for arrays declared with the `DIM` statement.
 
 ### Lists
 
-Commands that use lists of items store them with a header containing a
-2-byte length of the list in bytes, a 2-byte count of the number of
-items in the list, and a variable number of items.
+Commands that use lists of items store them with an `ITEMLIST` token
+followed by a header containing a 2-byte length of the list in bytes
+(_not_ including the `ITEMLIST` token), a 2-byte count of the number
+of items in the list, and a variable number of items.
 
 Each item is specified by a 2-byte length of the item in bytes
-followed by the item tokens.
+followed by the item tokens.  Each item _except_ the last one is
+followed by a separator token (typically `','`) which is _not_
+included in the item's length.
+
+The `PRINT` statement requires a modified form of this list structure
+since it doesn't require a separator between each print item and the
+`','` character is treated as a special print instruction (advance to
+the next tab stop) which may appear at the beginning or multiple times
+in sequence unlike its use in normal lists.  This is stored as a
+`PRINTLIST` token followed by the same list structure as above, but
+the items in the list are _not_ followed by separator tokens; instead,
+any `','` or `';'` separators are added to the list as independent
+items.
 
 ### Arithmetic Expressions
 
@@ -107,6 +120,14 @@ Commands with no parameters or text after them (e.g. `CONTINUE`,
 
 This consists of the `DATA` token, the internal token `ITEMLIST`, a
 list header, and variable number of constants (numbers or strings).
+
+Due to the grammar, negative numbers are handled specially, because
+the `'-'` prefix is normally treated as a unary operator and integer
+literals stored an unsigned numbers.  If there is a negative integer
+it is tokenized with the short expression `'{'` (phantom brace), NEG,
+INTEGER, _absolute integer value_, `'}'`.  If there is a negative
+floating-point number (or integer exceeding the sizef of an `unsigned
+long`) its value is negated during tokenization.
 
 ### `IF` / `THEN` / [`ELSE`]
 

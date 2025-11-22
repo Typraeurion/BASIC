@@ -10,7 +10,7 @@ READ F14,F15,F16,F17,F18,F19,F20
 
 PRINT "The 18th number is ";F18
 
-The next data in the file should be a string
+REM The next data in the file should be a string
 READ O1$
 READ O2$,O3$
 READ O4$,O5$,O6$

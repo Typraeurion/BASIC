@@ -1,1 +1,15 @@
-PRINT "Hello, world!"
+10 PRINT "Hello, world!"
+20 PRINT "This sentence should";
+30 PRINT " all be on the same line.",
+40 PRINT "<- (tab stop)"
+50 PRINT ;"This line should be flush left."
+60 PRINT ,"This line should start at the first tab stop"
+70 PRINT ,,"Second tab stop"
+80 PRINT ,,,"Third tab stop"
+90 PRINT ,,,,"Fourth tab stop"
+100 PRINT "Positive numbers like";7;"should be surrounded by spaces."
+110 PRINT "Negative numbers (";-12;") should not have a leading space, just trailing."
+A$="s"
+120 PRINT "String variable";A$;" should not have any leading or trailing space."
+130 PRINT "Semicolon" A$ " between string" A$ " and variable" A$ " are optional."
+RUN

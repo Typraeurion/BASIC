@@ -93,6 +93,7 @@ static void dump_tokens (unsigned short *);
 %token TAB
 /* These tokens are used in the parser, not the lexical scanner */
 %token <token_list> ITEMLIST
+%token <token_list> PRINTLIST
 %token <tokens> NUMEXPR  /* Numeric expression */
 %token <tokens> STREXPR  /* String expression */
 %token <tokens> NUMLVAL  /* Numeric variable to assign (pass by reference) */
@@ -446,20 +447,6 @@ statement: assignment
 	  /* Make a statement out of the list */
 	  $<tokens>$ = add_tokens ("t*", PRINT, $<tokens>2);
 	}
-    | PRINT printlist ';' /* Print something, but don't follow with NL */
-	{
-	  if (tracing & TRACE_GRAMMAR)
-	    fprintf (stderr, "Print a line and stay at the line's end\n");
-	  /* Make a statement out of the list */
-	  $<tokens>$ = add_tokens ("t*t", PRINT, $<tokens>2, ';');
-	}
-    | PRINT printlist ',' /* Print something, follow with tab instead of NL */
-	{
-	  if (tracing & TRACE_GRAMMAR)
-	    fprintf (stderr, "Print a line and tab over a bit from the end\n");
-	  /* Make a statement out of the list */
-	  $<tokens>$ = add_tokens ("t*t", PRINT, $<tokens>2, ',');
-	}
     | READ varlist  /* Read next item from a `DATA' line, store in var */
 	{
 	  if (tracing & TRACE_GRAMMAR)
@@ -606,30 +593,16 @@ printlist: printitem
     {
       /* Make the print item into a new token list. */
       $<tokens>$ = add_tokens
-	("tttt*", ITEMLIST, 0, 1,
+	("tttt*", PRINTLIST, 0, 1,
 	 sizeof (struct list_item) + $<tokens>1[0] - sizeof (short),
 	 $<tokens>1);
       ((struct list_header *) &$<tokens>$[2])->length
 	= $<tokens>$[0] - 2 * sizeof (short);
     }
-    | printlist ';' printitem
+    | printlist printitem
     {
-      /* Enlarge the array to include the next print item and semicolon. */
-      $<tokens>$ = add_tokens
-	("*tt#", $<tokens>1, ';',
-	 sizeof (struct list_item) + $<tokens>3[0] - sizeof (short),
-	 $<tokens>3);
-      ((struct list_header *) &$<tokens>$[2])->length
-	= $<tokens>$[0] - 2 * sizeof (short);
-      ((struct list_header *) &$<tokens>$[2])->num_items++;
-    }
-    | printlist ',' printitem
-    {
-      /* Enlarge the array to include the next print item and comma. */
-      $<tokens>$ = add_tokens
-	("*tt#", $<tokens>1, ',',
-	 sizeof (struct list_item) + $<tokens>3[0] - sizeof (short),
-	 $<tokens>3);
+      /* Enlarge the array to include the next print item. */
+      $<tokens>$ = add_tokens ("*t#", $<tokens>1, $<tokens>2[0], $<tokens>2);
       ((struct list_header *) &$<tokens>$[2])->length
 	= $<tokens>$[0] - 2 * sizeof (short);
       ((struct list_header *) &$<tokens>$[2])->num_items++;
@@ -706,6 +679,18 @@ assignment: numvariable '=' arithexpr
     ;
 
 printitem: anyexpression
+    | ';'
+    {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Concatenating print items\n");
+      $<tokens>$ = add_tokens ("t", ';');
+    }
+    | ','
+    {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Advance print to next tab stop\n");
+      $<tokens>$ = add_tokens ("t", ',');
+    }
       /* `TAB()' is a special case -- it's a string function without a `$',
        * but it only makes sense in `PRINT' statements anyway. */
     | TAB '(' numexpression ')'
@@ -951,7 +936,23 @@ number: INTEGER
     }
     ;
 
-anyconstant: number
+anyconstant:
+    '-' INTEGER %prec NEG
+    {
+      /* This needs to be converted to a short
+       * expression that negates the value. */
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Negative numeric constant -%lu", $<integer>2);
+      $<tokens>$ = add_tokens ("tttit", '{', NEG, INTEGER, $<integer>2, '}');
+    }
+    | '-' FLOATINGPOINT %prec NEG
+    {
+      /* We can simply negate the floating-point value inline. */
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Negative numeric constant %G", -$<floating_point>2);
+      $<tokens>$ = add_tokens ("tf", FLOATINGPOINT, -$<floating_point>2);
+    }
+    | number
     | STRING
     {
       if (tracing & TRACE_GRAMMAR)
