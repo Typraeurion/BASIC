@@ -7,9 +7,6 @@
   evaluation of the value to assign is disjointed from the variable
   being assigned to.
 
-* `DEF` (define function) is not yet implemented.  It is recognized by
-  the parser though.
-
 * `NEXT` does not support more than one variable in the same
   statement.  It appears that this feature was introduced in Altair
   BASIC (by Microsoft) in 1975, and was not a part of the original

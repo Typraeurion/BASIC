@@ -25,6 +25,11 @@ struct fndef *function_table = NULL;
 void
 free_function (struct fndef *fn)
 {
+  if (fn->arg_ids != NULL)
+    {
+      free (fn->arg_ids);
+      fn->arg_ids = NULL;
+    }
   if (fn->expr != NULL)
     {
       free (fn->expr);
@@ -212,6 +217,9 @@ get_arguments (struct list_header *arg_list, var_u *args,
       /* Is this a valid argument? */
       switch (*tp)
 	{
+	case IDENTIFIER:
+	case INTEGER:
+	case FLOATINGPOINT:
 	case NUMEXPR:
 	  if (argtypes & (1 << i))
 	    {
@@ -223,6 +231,8 @@ get_arguments (struct list_header *arg_list, var_u *args,
 	  args[i].num = eval_number (&tp);
 	  break;
 
+	case STRING:
+	case STRINGIDENTIFIER:
 	case STREXPR:
 	  if (!(argtypes & (1 << i)))
 	    {
@@ -465,11 +475,11 @@ str_array_lookup (unsigned short id, struct list_header *index_list)
 var_u
 eval_fn_or_array (unsigned short id, struct list_header *arg_list)
 {
-  int i;
+  int i, arg_id;
   struct list_item *lp;
   unsigned short *tp;
   struct fndef *fn_or_array;
-  var_u args[32], result;
+  var_u args[32], saved_vars[32], result;
   unsigned long arg_types = 0;
 
   fn_or_array = find_function (id);
@@ -481,15 +491,16 @@ eval_fn_or_array (unsigned short id, struct list_header *arg_list)
       return (var_u) (struct string_value *) NULL;
     }
 
+  /* Get the arguments */
+  if (get_arguments (arg_list, args,
+		     fn_or_array->num_args, fn_or_array->argtypes))
+    return ((fn_or_array->type == '$')
+	    ? (var_u) (struct string_value *) NULL : (var_u) 0.0);
+
   /* Call the appropriate subroutine depending on whether this is
    * a built-in function, user-defined function, or array */
   if (fn_or_array->built_in != NULL)
     {
-      /* Get the arguments */
-      if (get_arguments (arg_list, args,
-			 fn_or_array->num_args, fn_or_array->argtypes))
-	return ((fn_or_array->type == '$')
-		? (var_u) (struct string_value *) NULL : (var_u) 0.0);
       /* Compute the result */
       result = fn_or_array->built_in (args);
       /* Free any string arguments */
@@ -503,9 +514,55 @@ eval_fn_or_array (unsigned short id, struct list_header *arg_list)
 
   if (fn_or_array->expr != NULL)
     {
-      fputs ("eval_fn_or_array(): User-defined expressions not yet implemented\n", stderr);
-      return ((fn_or_array->type == '$')
-	      ? (var_u) (struct string_value *) NULL : (var_u) 0.0);
+      /* Guard against recursion, which would result in an infinite loop
+       * since expressions don't do conditional evaluation. */
+      if (fn_or_array->in_use)
+	{
+	  printf ("ERROR - %s CALLED RECURSIVELY, WHICH IS NOT SUPPORTED\n",
+		  name_table[id]);
+	  return ((fn_or_array->type == '$')
+		  ? (var_u) (struct string_value *) NULL : (var_u) 0.0);
+	}
+      fn_or_array->in_use = 1;
+
+      /* Save the existing value(s) of all function arguments,
+       * replacing the function variables with the actual parameters. */
+      for (i = 0; i < fn_or_array->num_args; i++)
+	{
+	  arg_id = fn_or_array->arg_ids[i];
+	  if (fn_or_array->argtypes & (1 << i))
+	    {
+	      saved_vars[i].str = variable_values[arg_id].str;
+	      variable_values[arg_id].str = args[i].str;
+	    }
+	  else
+	    {
+	      saved_vars[i].num = variable_values[arg_id].num;
+	      variable_values[arg_id].num = args[i].num;
+	    }
+	}
+
+      /* Evaluate the result according to whether
+       * it's a numeric or string function. */
+      tp = &fn_or_array->expr->tokens[0];
+      if (fn_or_array->type)
+	result.str = eval_string (&tp);
+      else
+	result.num = eval_number (&tp);
+
+      /* Restore the previous value(s) of all function arguments. */
+      for (i = 0; i < fn_or_array->num_args; i++)
+	{
+	  arg_id = fn_or_array->arg_ids[i];
+	  if (fn_or_array->argtypes & (1 << i))
+	    variable_values[arg_id].str = saved_vars[i].str;
+	  else
+	    variable_values[arg_id].num = saved_vars[i].num;
+	}
+
+      fn_or_array->in_use = 0;
+
+      return result;
     }
 
   if (fn_or_array->array_dimension != NULL)
@@ -543,6 +600,139 @@ eval_fn_or_array (unsigned short id, struct list_header *arg_list)
 	   " %s does not have a definition\n", name_table[id]->contents);
   return ((fn_or_array->type == '$')
 	  ? (var_u) (struct string_value *) NULL : (var_u) 0.0);
+}
+
+
+/* Define a user-supplied function. */
+void
+cmd_def (struct statement_header *stmt)
+{
+  unsigned short *tp;
+  struct list_header *var_list;
+  struct list_item *lip;
+  int i, j, func_id;
+  char func_type;	/* '$' for string, 0 for numeric function; */
+  unsigned long argtypes = 0; /* see definition of fndef */
+  unsigned short *arg_ids;
+  struct fndef *new_function;
+
+  tp = &stmt->tokens[0];
+  if ((*tp != NUMLVAL) && (*tp != STRLVAL))
+    {
+    unexpected_token_error:	 /* We have a lot of cases that can end up here */
+      fputs ("cmd_def(): unexpected token ", stderr);
+      list_token (tp, stderr);
+      fputc ('\n', stderr);
+      return;
+    }
+  func_type = (*tp == STRLVAL) ? '$' : 0;
+  ++tp;
+  if ((*tp != IDENTIFIER) && (*tp != STRINGIDENTIFIER))
+    goto unexpected_token_error;
+  if (*tp != (func_type ? STRINGIDENTIFIER : IDENTIFIER))
+    {
+      fputs ("cmd_def(): INTERNAL ERROR: LVAL identifier type does not match DEF statement type\n", stderr);
+      return;
+    }
+  func_id = *(++tp);
+  if (*(++tp) != '(')
+    goto unexpected_token_error;
+  if (*(++tp) != ITEMLIST)
+    goto unexpected_token_error;
+  tp++;
+  var_list = (struct list_header *) tp;
+  arg_ids = (unsigned short *) calloc (var_list->num_items, sizeof (short));
+  lip = &var_list->item[0];
+  for (i = 0; i < var_list->num_items; i++)
+    {
+      if (lip->length != sizeof (struct list_item) + 2 * sizeof (short))
+	{
+	  tp = (unsigned short *) lip;
+	  goto unexpected_token_error;
+	}
+      if (lip->tokens[0] == IDENTIFIER)
+	{
+	  arg_ids[i] = lip->tokens[1];
+	}
+      else if (lip->tokens[0] == STRINGIDENTIFIER)
+	{
+	  argtypes |= 1 << i;
+	  arg_ids[i] = lip->tokens[1];
+	}
+      else {
+	tp = &lip->tokens[0];
+	goto unexpected_token_error;
+      }
+      for (j = 0; j < i; j++)
+	{
+	  if (arg_ids[i] == arg_ids[j])
+	    {
+	      printf ("ERROR - DEF: DUPLICATE ARGUMENT %s\n",
+		      name_table[arg_ids[i]]->contents);
+	    }
+	}
+      tp = (unsigned short *) &((char *) lip)[lip->length];
+      if ((*tp != ',') && (*tp != ')'))
+	goto unexpected_token_error;
+      lip = (struct list_item *) ++tp;
+    }
+
+  /* We now have the full declaration side, and the token
+   * pointer should be right after the closing ')' token. */
+  if (*tp != '=')
+    goto unexpected_token_error;
+  tp++;
+  if ((*tp != NUMEXPR) && (*tp != STREXPR))
+    goto unexpected_token_error;
+  if (*tp != (func_type ? STREXPR : NUMEXPR))
+    {
+      fputs ("cmd_def(): INTERNAL ERROR: expression type does not match DEF statement type\n", stderr);
+      return;
+    }
+
+  /* This should be enough for us to allocate a function definition.
+   * If a function by the same name has already been defined, clear it
+   * UNLESS it's a built-in function. */
+  new_function = find_function (func_id);
+  if (new_function != NULL)
+    {
+      if (new_function->built_in != NULL)
+	{
+	  printf ("ERROR - DEF: %s IS A BUILT-IN FUNCTION\n",
+		  name_table[func_id]->contents);
+	  executing = 0;
+	  return;
+	}
+      free_function (new_function);
+    } else {
+      /* Add another entry to the function table */
+      function_table = (struct fndef *) realloc
+	(function_table, sizeof (struct fndef) * ++function_table_size);
+      new_function = &function_table[function_table_size - 1];
+      memset (new_function, 0, sizeof (struct fndef));
+      new_function->name_index = func_id;
+    }
+  new_function->type = func_type;
+  new_function->num_args = var_list->num_items;
+  new_function->argtypes = argtypes;
+  new_function->arg_ids = arg_ids;
+
+  /* Make a copy of the expression tokens.  This is needed in case
+   * we're defining the function in immediate mode or if the user
+   * changes or deletes the line containing the original expression
+   * later; the function definition should persist. */
+
+  /* The expression length includes the leading xxxEXPR token
+   * and trailing statement terminator. */
+  unsigned short expr_length = &((char *) stmt)[stmt->length] - ((char *) tp);
+  new_function->expr = (struct statement_header *) calloc
+    /* The statement header length includes its length field. */
+    (1, sizeof (short) + expr_length);
+  new_function->expr->length = sizeof (short) + expr_length;
+  /* Copy the xxxEXPR token as the psuedo-statement `command' */
+  new_function->expr->command = *tp++;
+  /* The rest of the expression goes into the psuedo-statement token list */
+  memcpy (&new_function->expr->tokens, tp, expr_length - sizeof (short));
 }
 
 

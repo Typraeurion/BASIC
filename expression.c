@@ -146,7 +146,7 @@ concat_strings (struct string_value *str1, const struct string_value *str2)
   return str1;
 }
 
-/* Evaluate a numeric operand.  Return the result.
+/* Evaluate a string operand.  Return the result.
  * The token pointer is advanced to the next token after the operand. */
 struct string_value *
 eval_string (unsigned short **tpp)

@@ -66,12 +66,15 @@ typedef union {
 struct fndef {
   unsigned short name_index;	/* Index of the name of the function
 				 * in the variable name table	*/
+  char in_use;			/* Set when evaluating a user-defined
+				 * function to prevent recursion */
   char type;			/* Numeric or string function?	*/
   unsigned char num_args;	/* Number of arguments -- 1-32	*/
   unsigned long argtypes;	/* Bitmask of argument types; (1 << n)
 				 * masks type of argument n+1,
 				 * 1 for string, 0 for numeric	*/
   var_u (*built_in) (var_u *);	/* Pointer to function if it's built-in */
+  unsigned short *arg_ids;	/* ID(s) of the arguments for user-defined */
   struct statement_header *expr; /* Function definition for user-defined */
   unsigned short *array_dimension; /* For arrays, the size of each dimension */
   void *array_data;		/* For arrays, the array data	*/

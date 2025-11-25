@@ -26,7 +26,7 @@ static const struct {
   { BYE, cmd_bye },
   { CONTINUE, cmd_continue },
   { DATA, cmd_data },
-  //  { DEF, cmd_def },
+  { DEF, cmd_def },
   { DIM, cmd_dim },
   { END, cmd_end },
   { FOR, cmd_for },

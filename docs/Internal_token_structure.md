@@ -129,6 +129,29 @@ INTEGER, _absolute integer value_, `'}'`.  If there is a negative
 floating-point number (or integer exceeding the sizef of an `unsigned
 long`) its value is negated during tokenization.
 
+### `DEF`ine Function
+
+This statement starts with the usual command header: an unsigned short
+length of the statement followed by the `DEF` token.
+
+The next item is the function name and argument list.  This begins
+with the tokens `NUMLVAL`, `IDENTIFIER`, and a short variable ID in
+the case of a numeric function; or `STRLVAL`, `STRIDENTIFIER`, and a
+short variable ID for a string function.
+
+In both cases the function identifier is followed by the tokens `'('`,
+`ITEMLIST`, the length in bytes of the item list (including the length
+shorts), the number of items in the list, then the arguments.  Each
+argument is tokenized with the length of the list item (6), the token
+`IDENTIFIER` or `STRINGIDENTIFIER`, and a short variable ID.  Each
+argument except the last is followed by a `','` token, and the last
+argument is followed by the `')'` token.
+
+Following the argument list are the tokens `'='` and either `NUMEXPR`
+or `STREXPR`, matching the type of the function.  Finally there are
+the tokens for the expression that defines the function; see
+“Arithmetic Expressions” above for details.
+
 ### `IF` / `THEN` / [`ELSE`]
 
 There are two forms for the `THEN` and `ELSE` clauses of the `IF`

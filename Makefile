@@ -3,6 +3,15 @@
 CC=gcc
 CFLAGS=-g
 
+OS_NAME := $(shell uname -s)
+
+LDFLAGS=-lfl -lm
+ifeq ($(OS_NAME),Darwin)
+  # MacOS provides the lexer functions in libl
+  # rather than libfl, for some odd reason.
+  LDFLAGS := -ll -lm
+endif
+
 PROGRAM=basic
 OBJS=basic.tab.o expression.o functions.o input.o lex.yy.o \
      list.o print.o run.o tables.o wrap.o
@@ -21,7 +30,8 @@ lex.yy.c lex.yy.h: basic.lex
 	flex -d --header-file=lex.yy.h -i basic.lex
 
 ${PROGRAM}: ${OBJS}
-	${CC} ${CFLAGS} -o ${PROGRAM} ${OBJS} -lfl -lm
+	echo "Building for ${OS_NAME}"
+	${CC} ${CFLAGS} -o ${PROGRAM} ${OBJS} ${LDFLAGS}
 
 expression.o: expression.c tables.h basic.tab.h
 

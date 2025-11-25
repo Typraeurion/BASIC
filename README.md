@@ -12,11 +12,16 @@ about using the BASIC interpreter.
 
 The BASIC interpreter should compile on any BSD or Linux system with a
 [GNU C](https://gcc.gnu.org/) compiler, [GNU
-Bison](https://www.gnu.org/software/bison/), and
+Bison](https://www.gnu.org/software/bison/) (version 3), and
 [Flex](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))
 (including the `libfl` library, typically provided by “libfl-devel”).
 You may also need some version of
 [Make](https://www.gnu.org/software/make/).
+
+It _may_ also compile on MacOS if you have the proper build tools
+installed.  XCode can provide most of them, but its version of Bison
+is too old; you will need at least that tool from
+[Homebrew](https://brew.sh/).
 
 To build the interpreter, run:
 
