@@ -49,7 +49,7 @@ signed int current_load_nesting = 0;
   return INTEGER;
 }
 
-"\""[^\"\n]*"\""	{
+"\""[^\"]*"\""	{
   yylval.string = (struct string_value *) calloc
     (1, WALIGN (sizeof (struct string_value) + yyleng - 2 + 1));
   yylval.string->length = yyleng - 2;

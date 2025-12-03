@@ -1,0 +1,11 @@
+REM Most of these changes just replace newlines embedded
+REM in string literals with empty PRINT statements.  This
+REM version of BASIC supports strings containing newlines.
+160  PRINT : PRINT : PRINT : PRINT
+370  PRINT : PRINT : PRINT : PRINT " ARE THERE TWO GENERALS PRESENT ";
+420  PRINT : PRINT "            YOU ARE THE CONFEDERACY.   GOOD LUCK!"
+620  PRINT : PRINT : PRINT
+1090  PRINT : PRINT : PRINT : PRINT : PRINT
+2190  PRINT : PRINT : PRINT "              ","CONFEDERACY","UNION"
+2360  REM - 1 WHO WON
+2860  PRINT : PRINT : PRINT : PRINT : PRINT : PRINT

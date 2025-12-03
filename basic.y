@@ -419,14 +419,14 @@ statement: assignment
 	  /* Convert the variable token list into a statement */
 	  $<tokens>$ = add_tokens ("t*", NEXT, $<tokens>2);
 	}
-    | ON numvariable GOSUB linelist /* `GOSUB' the Nth line in the list */
+    | ON arithexpr GOSUB linelist /* `GOSUB' the Nth line in the list */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Compute the line to go subroutine\n");
 	  /* Make a statement out of the existing tokens */
 	  $<tokens>$ = add_tokens ("t*t#", ON, $<tokens>2, GOSUB, $<tokens>4);
 	}
-    | ON numvariable GOTO linelist /* `GOTO' the Nth line in the list */
+    | ON arithexpr GOTO linelist /* `GOTO' the Nth line in the list */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr, "Compute the line to go to\n");
