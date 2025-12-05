@@ -72,6 +72,7 @@ static void dump_tokens (unsigned short *);
 %token STEP
 %token STOP
 %token THEN
+%token _THEN_	/* Implied THEN for IF / ... [ ELSE ] statements */
 %token TO
 %token TRACE
 /* Arithmetic operators */
@@ -347,6 +348,30 @@ statement: assignment
 	       /* Add one to the original clause length to include
 		* the statement terminator that will be added later. */
 	       $<token_statement>5->length + sizeof(short), $<tokens>5);
+	}
+    | IF numexpression statement elseclause /* Same as IF / THEN above, but `THEN' is implied */
+	{
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr,
+		     "(Implied) execute the next statement if this expression is true\n");
+	  /* Construct the IF statement from the expression and clause tokens.
+	   * The IF header includes two additional offset values to the
+	   * statements following the THEN and (optional) ELSE tokens. */
+	  int then_offset = offsetof(struct if_header, tokens)
+	    + $<token_statement>2->length;	// as above
+	  /* Add the size of another token to the length of the THEN clause
+	   * to include the statement terminator that will be added later. */
+	  int then_length = $<token_statement>3->length + sizeof(short);
+	  int else_offset = then_offset + then_length;
+	  $<tokens>$ = add_tokens
+	    ("ttt*tt#", IF, then_offset, else_offset, $<tokens>2, _THEN_,
+	     then_length, $<tokens>3);
+	  if ($<tokens>4 != NULL) // ELSE clause
+	    $<tokens>$ = add_tokens
+	      ("*tt#", $<tokens>$, ELSE,
+	       /* Add one to the original clause length to include
+		* the statement terminator that will be added later. */
+	       $<token_statement>4->length + sizeof(short), $<tokens>4);
 	}
     | INPUT varlist /* Read a value from the terminal and store in vars */
 	{

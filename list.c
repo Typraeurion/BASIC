@@ -63,6 +63,7 @@ const struct {
   { STEP, " STEP " },
   { STOP, "STOP" },
   { THEN, " THEN " },
+  { _THEN_, " " },
   { TO, " TO " },
   { TRACE, "TRACE " },
   /* Arithmetic operators */

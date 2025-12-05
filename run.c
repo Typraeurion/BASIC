@@ -498,7 +498,7 @@ cmd_if (struct statement_header *stmt)
 
   /* The token pointer should now be pointing at THEN */
   terminator = *tp++;
-  if (terminator != THEN)
+  if ((terminator != THEN) && (terminator != _THEN_))
     {
       fputs ("IF: Missing THEN; got ", stderr);
       list_token (--tp, stderr);
@@ -515,7 +515,7 @@ cmd_if (struct statement_header *stmt)
   stmt = (struct statement_header *) tp;
   terminator = *((unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)]);
   while (terminator != '\n') {
-    if ((terminator == THEN) || (terminator == ':')) {
+    if ((terminator == THEN) || (terminator == _THEN_) || (terminator == ':')) {
       current_statement++;
       stmt = (struct statement_header *) &((char *) stmt)[stmt->length];
       terminator = *((unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)]);

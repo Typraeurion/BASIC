@@ -244,6 +244,10 @@ After entering a complete program using line numbers, you tell
 @code{READY} prompt.  @sc{Basic} will start executing statements from
 the first line of the program.
 
+Before executing the first statement, this version of @sc{basic}
+clears all variables that the program uses as well as removing any
+user-defined functions.
+
 @code{RUN} may also be used within a program, which will cause
 @sc{basic} to start it over from the beginning.
 
@@ -344,6 +348,12 @@ dollar sign (@samp{$}) tagged at the end, as in @var{A$} or
 @var{PLAYER2NAME$}.  String variables are distinct from numeric
 variables, so, for example, you can use both @var{N} and @var{N$} in
 your program.
+
+Whenever you start a program with the @code{RUN} command, @sc{basic}
+will clear all variables---numeric variables are set to 0 and string
+variables are emptied.  However, not all versions of @sc{basic} behave
+this way; programs should always initialize the variables they use at
+the beginning and not rely on them having any particular value.
 
 @node Arrays, Assignment, Variables, Expressions
 @section Arrays
@@ -587,6 +597,7 @@ trigonometry) and manipulation of strings.
 
 @node Simple Numeric Functions, ABS, Functions, Functions
 @subsection Simple Numeric Functions
+@cindex functions, numeric
 
 @node ABS, INT, Simple Numeric Functions, Simple Numeric Functions
 @subsubsection @code{ABS}
@@ -635,6 +646,7 @@ is zero.
 
 @node Trigonometric and Transcendental Functions, ATN, SGN, Functions
 @subsection Trigonometric and Transcendental Functions
+@cindex functions, trigonometric
 
 In @sc{basic}, all trigonometric functions measure angles in degrees
 (0--360).
@@ -653,6 +665,7 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 
 @node EXP, LOG, COS, Trigonometric and Transcendental Functions
 @subsubsection @code{EXP}
+@cindex functions, transcendental
 @findex EXP
 
 @code{EXP(@var{X})} computes the natural exponential of @var{X}, or
@@ -685,6 +698,7 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 
 @node String Functions, LEN, TAN, Functions
 @subsection String Functions
+@cindex functions, string
 
 @node LEN, LEFT$, String Functions, String Functions
 @subsubsection @code{LEN}
@@ -756,6 +770,7 @@ and string comparisons are case-sensitive.
 
 @node Numeric and String Conversion Functions, ASC, String Functions, Functions
 @subsection Numeric and String Conversion Functions
+@cindex functions, conversion
 
 @node ASC, CHR$, Numeric and String Conversion Functions, Numeric and String Conversion Functions
 @subsubsection @code{ASC}
@@ -779,7 +794,7 @@ quotation mark (@samp{CHR$(34)}) or certain control characters (i.e.,
 
 @code{STR$(@var{X})} makes the number @var{X} into a printable string.
 
-@node VAL, Statements, STR$, Numeric and String Conversion Functions
+@node VAL, User-Defined Functions, STR$, Numeric and String Conversion Functions
 @subsubsection @code{VAL}
 @findex VAL
 
@@ -787,7 +802,49 @@ quotation mark (@samp{CHR$(34)}) or certain control characters (i.e.,
 into a numerical value.  Note that if @var{A$} does not consist of (or
 at least start with) a number, the resulting value will be zero.
 
-@node Statements, Remarks, VAL, Top
+@node User-Defined Functions, Statements, Numeric and String Conversion Functions, Functions
+@subsection User-Defined Functions
+@stindex @code{DEF}
+@cindex functions, user-defined
+
+A program can define its own functions by using the @code{DEF}
+statement.  This looks similar to an assignment with an array
+variable, except the arguments are function parameters rather than an
+array index.
+
+For example, the following program defines functions that select the
+minimum and maximum between two numbers:
+
+@cartouche
+@example
+10 DEF MIN(A,B)=(A+B-ABS(A-B))/2
+20 DEF MAX(A,B)=(A+B+ABS(A-B))/2
+@end example
+@end cartouche
+
+The variables used for the function parameters are not important
+outside of the definition; for example if the variables @code{A} and
+@code{B} are used elsewhere with the above program their values will
+not be changed by calls to @code{MIN(X,Y)} or @code{MAX(I,J)}.  The
+function definitions @emph{may} use other variables besides the
+function parameters, in which case it will use the value that those
+variables hold at the time the function is called.
+
+You can also define string functions this way.  For example, the
+following program defines a function that generates a random letter
+from ``A'' to ``Z'':
+
+@cartouche
+@example
+30 DEF RNDALPHA$(X)=CHR$(INT(RND(26))+65)
+@end example
+@end cartouche
+
+As shown in this example the function parameter doesn't need to
+actually be used in the function, but the function definition must
+have at least one parameter.
+
+@node Statements, Remarks, Expressions, Top
 @chapter Statements
 
 @node Remarks, Working With Data, Statements, Statements
@@ -824,7 +881,7 @@ program listing.
 @node Working With Data, Input and Output, Remarks, Statements
 @section Working With Data
 
-@node LET, DIM, Working With Data, Working With Data
+@node LET, DEF, Working With Data, Working With Data
 @subsection @code{LET}
 @cindex assignment of values to variables
 @cindex variables, assigning values to
@@ -853,7 +910,14 @@ cases easier to understand.
 @end example
 @end cartouche
 
-@node DIM, DATA, LET, Working With Data
+@node DEF, DIM, LET, Working With Data
+@subsection @code{DEF}
+@stindex @code{DEF}
+
+Use @code{DEF} to declare a user-defined function; @pxref{User-Defined
+Functions} for more details.
+
+@node DIM, DATA, DEF, Working With Data
 @subsection @code{DIM}
 @cindex arrays
 @stindex @code{DIM}
@@ -1199,7 +1263,7 @@ which sent it there.
 @end cartouche
 
 @node STOP and CONTINUE, IF, GOSUB and RETURN, Flow Control
-@subsection Temporary pause: @code{STOP} and @code{CONTINUE}
+@subsection Temporary Pause: @code{STOP} and @code{CONTINUE}
 @cindex stopping
 @stindex @code{CONTINUE}
 @stindex @code{STOP}
@@ -1217,7 +1281,7 @@ For convenience, the @code{CONTINUE} command may be abbreviated as
 ``@code{CONT.}''.
 
 @node IF, ELSE, STOP and CONTINUE, Flow Control
-@subsection Conditional code: @code{IF}
+@subsection Conditional Code: @code{IF}
 @cindex conditional execution
 @stindex @code{IF}
 
@@ -1263,6 +1327,18 @@ is for compatibility with some older Dartmouth @sc{basic} programs;
 for clarity in new programs, consider using the @code{AND} operator
 instead.
 
+For compatibility with some versions of @sc{basic}, then @code{THEN}
+keyword may be omitted; for example:
+
+@cartouche
+@example
+250 IF A<1 GOTO 520
+@end example
+@end cartouche
+
+However in most cases leaving out ``@code{THEN}'' can render the code
+less readable, so it is recommended that you always use it.
+
 @node ELSE, FOR and NEXT, IF, Flow Control
 @subsection @code{ELSE}
 @stindex @code{ELSE}
@@ -1302,7 +1378,7 @@ single conditional expression with @code{AND} and @code{OR} operators
 instead, or using implied @code{GOTO}s and separating the true and
 false statement blocks over different lines.
 
-@node FOR and NEXT, , ELSE, Flow Control
+@node FOR and NEXT, ON GO, ELSE, Flow Control
 @subsection Looping with @code{FOR} and @code{NEXT}
 @cindex loops
 @stindex @code{FOR}
@@ -1390,6 +1466,39 @@ variable, then continue the program after that point.
 @end example
 @end cartouche
 
+@node ON GO, Program Management, FOR and NEXT, Flow Control
+@subsection Case Switching with @code{ON} / @code{GO}...
+@cindex selective jump
+@cindex switching
+@stindex @code{ON}@dots@code{GOSUB}
+@stindex @code{ON}@dots@code{GOTO}
+
+The @code{ON} statement lets a program choose one of many possible
+paths to take next depending on a numeric expression.  @code{ON} is
+followed by a variable or expression that evaluates to an ordinal
+number that tells @sc{basic} which entry in a list of line numbers to
+use, then either @code{GOTO} (@pxref {@code{GOTO}}) or @code{GOSUB}
+(@pxref{GOSUB and RETURN}) followed by the list of line numbers.
+
+@cartouche
+@example
+10 FOR X=1 TO 5
+20 ON X GOSUB 1100,1200,1300,1400,1500
+30 NEXT X
+40 END
+@end example
+@end cartouche
+
+In the above example, the program will go to each of the subroutines
+in the list as X runs through the sequence of numbers 1 through 5.
+
+Any fractional value for the expression is truncated to an integer.
+If the expression evaluates to a non-positive number, @sc{basic} will
+go to the first line number in the list.  If the expression is greater
+than the number of line numbers in the list, @sc{basic} will skip over
+the @code{GOTO} / @code{GOSUB} part of the @code{ON} statement and
+continue to the next statement.
+
 @node Program Management, Index, Flow Control, Statements
 @section Program Management
 
@@ -1470,8 +1579,7 @@ LOAD "examples/Animal.more"
 @end cartouche
 
 
-@c To Do: document the commands DEF,
-@c        ON, TRACE
+@c To Do: document the TRACE command
 
 @node Index, Index of Statements, , Top
 @unnumbered Index
