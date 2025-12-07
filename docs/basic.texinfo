@@ -648,8 +648,11 @@ is zero.
 @subsection Trigonometric and Transcendental Functions
 @cindex functions, trigonometric
 
-In @sc{basic}, all trigonometric functions measure angles in degrees
-(0--360).
+In this implementation of @sc{basic}, all trigonometric functions
+measure angles in radians (0--6.283185).  Be aware that some dialects
+measured in angles in degrees, so programs written for those will need
+adjustments; the @code{DEGTORAD(@var{D})} and @code{RADTODEG(@var{R})}
+functions are provided to help with thsee conversions.
 
 @node ATN, COS, Trigonometric and Transcendental Functions, Trigonometric and Transcendental Functions
 @subsubsection @code{ATN}
@@ -657,13 +660,20 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 
 @code{ATN(@var{X})} computes the arctangent of @var{X}.
 
-@node COS, EXP, ATN, Trigonometric and Transcendental Functions
+@node COS, DEGTORAD, ATN, Trigonometric and Transcendental Functions
 @subsubsection @code{COS}
 @findex COS
 
 @code{COS(@math{@mit@Theta})} computes the cosine of @math{@mit@Theta}.
 
-@node EXP, LOG, COS, Trigonometric and Transcendental Functions
+@node DEGTORAD, EXP, COS, Trigonometric and Transcendental Functions
+@subsubsection @code{DEGTORAD}
+@findex DEGTORAD
+
+@code{DEGTORAD(@var{A})} converts an angle @var{A} in degrees to an
+angle in radians.
+
+@node EXP, LOG, DEGTORAD, Trigonometric and Transcendental Functions
 @subsubsection @code{EXP}
 @cindex functions, transcendental
 @findex EXP
@@ -671,13 +681,20 @@ In @sc{basic}, all trigonometric functions measure angles in degrees
 @code{EXP(@var{X})} computes the natural exponential of @var{X}, or
 {@catcode`@^=7 @math{e^X}}.
 
-@node LOG, SIN, EXP, Trigonometric and Transcendental Functions
+@node LOG, RADTODEG, EXP, Trigonometric and Transcendental Functions
 @subsubsection @code{LOG}
 @findex LOG
 
 @code{LOG(@var{X})} computes the natural logarithm of @var{X}.
 
-@node SIN, SQR, LOG, Trigonometric and Transcendental Functions
+@node RADTODEG, SIN, LOG, Trigonometric and Transcendental Functions
+@subsubsection @code{RADTODEG}
+@findex RADTODEG
+
+@code{RADTODEG(@var{R})} converts an angle @var{R} in radians to an
+angle in degrees.
+
+@node SIN, SQR, RADTODEG, Trigonometric and Transcendental Functions
 @subsubsection @code{SIN}
 @findex SIN
 

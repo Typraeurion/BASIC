@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include "tables.h"
 
-/* Trigonometric functions in BASIC use degrees (0-360).
+/* Trigonometric functions in BASIC may use degrees (0-360) or radians.
  * Define this value as 180/pi. */
 #define DEG_OVER_RAD 57.2957795130823208768
 
@@ -18,6 +18,7 @@ var_u fn_asc (var_u *);
 var_u fn_atn (var_u *);
 var_u fn_chr (var_u *);
 var_u fn_cos (var_u *);
+var_u fn_degtorad (var_u *);
 var_u fn_exp (var_u *);
 var_u fn_int (var_u *);
 var_u fn_left (var_u *);
@@ -25,9 +26,10 @@ var_u fn_len (var_u *);
 var_u fn_log (var_u *);
 var_u fn_lower (var_u *);
 var_u fn_mid (var_u *);
+var_u fn_radtodeg (var_u *);
+var_u fn_right (var_u *);
 var_u fn_rnd (var_u *);
 var_u fn_seed (var_u *);
-var_u fn_right (var_u *);
 var_u fn_sgn (var_u *);
 var_u fn_sin (var_u *);
 var_u fn_sqr (var_u *);
@@ -47,6 +49,7 @@ struct {
   { "ATN", 1, fn_atn, 0 },
   { "CHR$", 1, fn_chr, 0 },
   { "COS", 1, fn_cos, 0 },
+  { "DEGTORAD", 1, fn_degtorad, 0 },
   { "EXP", 1, fn_exp, 0 },
   { "INT", 1, fn_int, 0 },
   { "LEFT$", 2, fn_left, 1 },
@@ -112,7 +115,7 @@ var_u fn_asc (var_u *args)
 
 var_u fn_atn (var_u *args)
 {
-  return (var_u) (atan (args[0].num) * DEG_OVER_RAD);
+  return (var_u) atan (args[0].num);
 }
 
 var_u fn_chr (var_u *args)
@@ -132,13 +135,14 @@ var_u fn_chr (var_u *args)
 var_u fn_cos (var_u *args)
 {
   var_u result;
-  result.num = cos (args[0].num / DEG_OVER_RAD);
-  /* Because cos(pi/2) is not exactly 0 (due to rounding errors),
-   * try to zero any result less than 2^-32
-   * so that "COS(90)=0" comes out true. */
-  if ((result.num < 2.3283064365387e-10)
-      && (result.num > -2.3283064365387e-10))
-    result.num = 0.0;
+  result.num = cos (args[0].num);
+  return result;
+}
+
+var_u fn_degtorad (var_u *args)
+{
+  var_u result;
+  result.num = args[0].num / DEG_OVER_RAD;
   return result;
 }
 
@@ -245,6 +249,13 @@ var_u fn_mid (var_u *args)
   return (var_u) new_str;
 }
 
+var_u fn_radtodeg (var_u *args)
+{
+  var_u result;
+  result.num = args[0].num * DEG_OVER_RAD;
+  return result;
+}
+
 var_u fn_rnd (var_u *args)
 {
   double r, x = args[0].num;
@@ -308,10 +319,10 @@ var_u fn_sgn (var_u *args)
 var_u fn_sin (var_u *args)
 {
   var_u result;
-  result.num = sin (args[0].num / DEG_OVER_RAD);
+  result.num = sin (args[0].num);
   /* Because sin(pi) is not exactly 0 (due to rounding errors),
    * try to zero any result less than 2^-32
-   * so that "SIN(180)=0" comes out true. */
+   * so that "SIN(3.14159)=0" comes out true. */
   if ((result.num < 2.3283064365387e-10)
       && (result.num > -2.3283064365387e-10))
     result.num = 0.0;
@@ -342,13 +353,7 @@ var_u fn_str (var_u *args)
 var_u fn_tan (var_u *args)
 {
   var_u result;
-  result.num = tan (args[0].num / DEG_OVER_RAD);
-  /* Because tan(pi) is not exactly 0 (due to rounding errors),
-   * try to zero any result less than 2^-32
-   * so that "TAN(180)=0" comes out true. */
-  if ((result.num < 2.3283064365387e-10)
-      && (result.num > -2.3283064365387e-10))
-    result.num = 0.0;
+  result.num = tan (args[0].num);
   return result;
 }
 
