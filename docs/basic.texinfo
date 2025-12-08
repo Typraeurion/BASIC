@@ -221,11 +221,11 @@ you.
 
 This implementation of @sc{basic} is case-insensitive.  You can enter
 statements in either uppercase or lowercase, or a mixture of both, and
-@sc{basic} will be able to recognize them.  When you list your program,
-all words that @sc{basic} knows will automatically be converted to
-uppercase.  The same applies to variable names (@xref{Variables}),
-except that variable names retain the same case the had when you first
-used them.
+@sc{basic} will be able to recognize them.  When you list your
+program, all words that @sc{basic} knows will automatically be
+converted to uppercase.  The same applies to variable names
+(@xref{Variables}), except that variable names retain the same case
+they had when you first used them.
 
 The exception to this is strings (@xref{Data Types}.) @ @sc{Basic}
 itself doesn't care what the contents of a string are, but when you
@@ -281,9 +281,13 @@ integers less than 4 billion will show all digits.)
 
 @cindex string
 
-Strings are entered into programs by enclosing them in double quotation
-marks, @samp{"LIKE THIS"}.  A string can contain any regular character
-except another double quotation mark or @key{Return}.
+Strings are entered into programs by enclosing them in double
+quotation marks, @samp{"LIKE THIS"}.  A string can contain any regular
+character except another double quotation mark.  Strings @emph{can}
+contain @key{Return} (newline) characters; some older programs relied
+on this capability to print multiple lines with a single statement.
+For readability and portability, you should not rely on this behavior;
+use a separate @code{PRINT} statement for each line instead.
 
 @node Exiting, Expressions, Data Types, General Syntax
 @section Exiting Out of @sc{Basic}
@@ -1466,6 +1470,23 @@ And the next example will show multiples of @math{\pi}:
 60 NEXT I
 @end example
 @end cartouche
+
+Some older variants of @sc{basic} allowed you to list multiple
+variables in the same @code{NEXT} statement.  For compatibility this
+@sc{basic} also allows it, so for example
+
+@cartouche
+@example
+50 NEXT J,I
+@end example
+@end cartouche
+
+is equivalent to the two separate @code{NEXT} statements in the
+previous example.  Some variants also allowed a @code{NEXT} statement
+@emph{without} specifying a variable; this would repeat the most
+recent (innermost) @code{NEXT} loop.  This implementation of
+@sc{basic} supports the bare @code{NEXT} syntax as well, but it
+renders the code less readable and is discouraged.
 
 In the event that the initial value of a FOR loop exceeds the TO value
 (with a positive STEP, or if it is less than the TO value with a

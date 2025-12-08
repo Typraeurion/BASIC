@@ -648,17 +648,16 @@ cmd_for (struct statement_header *stmt)
     }
 }
 
-void
-cmd_next (struct statement_header *stmt)
+/* Evaluate NEXT for a given variable (by variable index).
+ * Returns 1 if we looped back to the statement following the FOR,
+ * 0 if we dropped out of the loop, or -1 if we encountered an error. */
+int
+evaluate_next (const int var)
 {
   struct statement_header *for_stmt;
   unsigned short *tp;
   double to_value, step_value;
-  int i, var;
-
-  /* Get the variable index.  Note that the order of tokens is:
-   * NEXT: IDENTIFIER, name index */
-  var = stmt->tokens[1];
+  int i;
 
   /* Search the FOR...NEXT stack for the variable. */
   for (i = for_stack_size - 1; i >= 0; --i)
@@ -668,9 +667,9 @@ cmd_next (struct statement_header *stmt)
     }
   if (i < 0)
     {
-      printf ("ERROR - NEXT: NOT IN %s LOOP", name_table[var]->contents);
+      printf ("ERROR - NEXT: NOT IN %s LOOP\n", name_table[var]->contents);
       executing = 0;
-      return;
+      return -1;
     }
   if (i < for_stack_size - 1)
     {
@@ -683,11 +682,11 @@ cmd_next (struct statement_header *stmt)
 				  for_stack[for_stack_size-1].for_statement);
   if (for_stmt != for_stack[for_stack_size-1].for_stmt)
     {
-      printf ("ERROR - NEXT: LOST FOR %s", name_table[var]->contents);
+      printf ("ERROR - NEXT: LOST FOR %s\n", name_table[var]->contents);
       /* Pop the FOR...NEXT stack */
       --for_stack_size;
       executing = 0;
-      return;
+      return -1;
     }
 
   /* Evaluate the TO end of the statement */
@@ -716,9 +715,76 @@ cmd_next (struct statement_header *stmt)
       /* Return to the statement following the FOR statement */
       current_line = for_stack[for_stack_size-1].for_line;
       current_statement = for_stack[for_stack_size-1].for_statement + 1;
+      return 1;
     } else {
       /* The loop has finished.  Pop the FOR...NEXT stack. */
       --for_stack_size;
+      return 0;
+    }
+}
+
+void
+cmd_next (struct statement_header *stmt)
+{
+  unsigned short *tp;
+  struct list_header *list;
+  struct list_item *next_var;
+  int i, var, status;
+
+  tp = &stmt->tokens[0];
+  if (*tp != ITEMLIST)
+    {
+      fputs ("NEXT: Unrecognized token - ", stderr);
+      list_token (tp, stderr);
+      fputc ('\n', stderr);
+      return;
+    }
+  list = (struct list_header *) (++tp);
+
+  if (for_stack_size <= 0)
+    {
+      puts ("ERROR - NEXT: NOT IN ANY LOOP\n");
+      executing = 0;
+      return;
+    }
+
+  /* For compatibility, the variable is optional.
+   * If omitted, use the top entry of the FOR stack. */
+  if (list->num_items == 0)
+    {
+      var = for_stack[for_stack_size-1].var_index;
+      evaluate_next (var);
+      return;
+    }
+
+  next_var = &list->item[0];
+  for (i = 0; i < list->num_items; i++)
+    {
+      tp = &next_var->tokens[0];
+      /* Get the variable index, which should follow an IDENTIFIER token. */
+      if (*tp != IDENTIFIER)
+	{
+	  fputs ("NEXT: Unrecognized token - ", stderr);
+	  list_token (tp, stderr);
+	  fputc ('\n', stderr);
+	  return;
+	}
+      var = tp[1];
+      status = evaluate_next (var);
+      if (status != 0)
+	/* Either looping to FOR or an error finishes this loop */
+	return;
+      /* Otherwise, the current variable is finished and we
+       * need to evaluate the next one in the list, if any. */
+      tp = (unsigned short *) &((char *) next_var)[next_var->length];
+      if ((i + 1 < list->num_items) && (*tp != ','))
+	{
+	  fputs ("NEXT: Unrecognized token - ", stderr);
+	  list_token (tp, stderr);
+	  fputc ('\n', stderr);
+	  return;
+	}
+      next_var = (struct list_item *) (++tp);
     }
 }
 

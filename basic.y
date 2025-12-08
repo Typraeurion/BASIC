@@ -436,7 +436,7 @@ statement: assignment
 	  /* Allocate a new statement */
 	  $<tokens>$ = add_tokens ("t", NEW);
 	}
-    | NEXT simplenumvar /* Step a variable; transfer control to `FOR' */
+    | NEXT simplenumvarlist /* Step a variable; transfer control to `FOR' */
 	{
 	  if (tracing & TRACE_GRAMMAR)
 	    fprintf (stderr,
@@ -676,6 +676,34 @@ varlist: anyvariable
     | varlist ',' anyvariable
     {
       /* Enlarge the array to include the next variable and comma. */
+      $<tokens>$ = add_tokens
+	("*tt#", $<tokens>1, ',',
+	 sizeof (struct list_item) + $<tokens>3[0] - sizeof (short),
+	 $<tokens>3);
+      ((struct list_header *) &$<tokens>$[2])->length
+	= $<tokens>$[0] - 2 * sizeof (short);
+      ((struct list_header *) &$<tokens>$[2])->num_items++;
+    }
+    ;
+
+/* Optional list of variables that may be used following a NEXT statement */
+simplenumvarlist: /* empty */
+    {
+      $<tokens>$ = add_tokens ("ttt", ITEMLIST, 2 * sizeof (short), 0);
+    }
+    | simplenumvar
+    {
+      /* Make the variable into a new token list. */
+      $<tokens>$ = add_tokens
+	("tttt*", ITEMLIST, 0, 1,
+	 sizeof (struct list_item) + $<tokens>1[0] - sizeof (short),
+	 $<tokens>1);
+      ((struct list_header *) &$<tokens>$[2])->length
+	= $<tokens>$[0] - 2 * sizeof (short);
+    }
+    | simplenumvarlist ',' simplenumvar
+    {
+      /* Enlarge the list to include the next variable and comma. */
       $<tokens>$ = add_tokens
 	("*tt#", $<tokens>1, ',',
 	 sizeof (struct list_item) + $<tokens>3[0] - sizeof (short),
