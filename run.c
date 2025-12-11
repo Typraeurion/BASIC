@@ -514,6 +514,11 @@ cmd_if (struct statement_header *stmt)
   current_statement++;
   stmt = (struct statement_header *) tp;
   terminator = *((unsigned short *) &((char *) stmt)[stmt->length - sizeof (short)]);
+  if ((stmt->command == _GOTO_) && (terminator == ':')) {
+    /* Exception: if the statement has an implied GOTO (i.e. THEN ##)
+     * and is followed by another statement, assume an implied ELSE. */
+    return;
+  }
   while (terminator != '\n') {
     if ((terminator == THEN) || (terminator == _THEN_) || (terminator == ':')) {
       current_statement++;

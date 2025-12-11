@@ -32,6 +32,9 @@
 115 PRINT "Test 11: GOTO following ELSE clause for true condition was not taken"
 120 IF 0 THEN PRINT "" ELSE PRINT "":PRINT "Test 12: Statement following ELSE clause executed for false condition":GOTO 130
 125 PRINT "Test 12: ERROR!  GOTO following ELSE clause for false condition was not taken"
-130 END
+130 IF 0 THEN 135:PRINT "Test 13: Implied ELSE taken for false condition":GOTO 140
+133 PRINT "Test 13: ERROR! IF statement completely fell through"
+135 PRINT "Test 13: ERROR! THEN goto taken for false condition"
+140 END
 
 RUN

@@ -1327,7 +1327,15 @@ false (i.e. zero).  There are two forms of this statement.
 
 When @code{THEN} is followed by a line number, the program goes to
 that line if the expression is true; otherwise it continues to the
-next line.  This is an implied @code{GOTO}.
+next statement.  This is an implied @code{GOTO}.
+
+In some old programs, you may find an implied @code{GOTO} followed by
+another statement on the same line, e.g. ``@code{IF S>4 THEN 770:IF
+S<1 THEN 770}''.  This implementation of @sc{basic} treats it as if
+there were an implied @code{ELSE} (@pxref{ELSE}) instead of the colon
+(``@code{:}''), but programs should not rely on this behavior and
+write statements a different way for clarity.  The preceding statement
+would be better written ``@code{IF S>4 OR S<1 THEN 770}''.
 
 @cartouche
 @example
@@ -1340,7 +1348,7 @@ When @code{THEN} is followed by another statement, the program
 executes the rest of the line if the expression is true; otherwise it
 skips that line and continues to the next line.  You may have multiple
 statements after @code{THEN}; @sc{basic} will skip all of them if the
-expression is false, with the exception of an @code{ELSE} clause.
+expression is false.
 
 The statement following @code{THEN} may be another @code{IF}
 statement, allowing you to chain multiple conditions together.  This
@@ -1389,6 +1397,11 @@ that line if the @code{IF} expression is false.  This is an implied
 
 When @code{ELSE} is followed by another statement, the program
 executes the rest of the line if the @code{IF} expression is false.
+
+Note that the grammar only allows one statement (or line number)
+between @code{THEN} and @code{ELSE}, with no colons.  If you need to
+have multiple statements in the condition true case, break up the code
+blocks over multiple lines.
 
 The statement following @code{ELSE} may be another @code{IF}
 statement, allowing you to chain multiple conditions together.
