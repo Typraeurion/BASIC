@@ -51,6 +51,7 @@ const struct {
   { NEXT, "NEXT " },
   { OFF, "OFF" },
   { ON, "ON " },
+  { PAUSE, "PAUSE " },
   { PARSER, "PARSER " },
   { PRINT, "PRINT " },
   { READ, "READ " },

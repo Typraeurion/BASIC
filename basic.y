@@ -60,6 +60,7 @@ static void dump_tokens (unsigned short *);
 %token OFF
 %token ON
 %token PARSER
+%token PAUSE
 %token PRINT
 %token READ
 %token REM
@@ -457,6 +458,12 @@ statement: assignment
 	    fprintf (stderr, "Compute the line to go to\n");
 	  /* Make a statement out of the existing tokens */
 	  $<tokens>$ = add_tokens ("t*t#", ON, $<tokens>2, GOTO, $<tokens>4);
+	}
+    | PAUSE arithexpr    /* Pause for a given amount of time */
+	{
+	  if (tracing & TRACE_GRAMMAR)
+	    fprintf (stderr, "Pause for some time\n");
+	  $<tokens>$ = add_tokens ("t*", PAUSE, $<tokens>2);
 	}
     | PRINT             /* Print a blank line */
 	{

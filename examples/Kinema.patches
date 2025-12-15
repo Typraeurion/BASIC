@@ -1,0 +1,8 @@
+REM Correction for standard Earth gravity
+40 G=9.807
+115 A=0.5*V^2/G
+120 A=2*V/G
+132 A=V-G*T
+REM This change is just to disambiguate the user input from gravitational acceleration.
+500 INPUT GUESS
+502 IF ABS((GUESS-A)/A)<.15 THEN 510

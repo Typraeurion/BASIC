@@ -1,7 +1,9 @@
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "tables.h"
 #include "basic.tab.h"
 
@@ -42,6 +44,7 @@ static const struct {
   { NEW, cmd_new },
   { NEXT, cmd_next },
   { ON, cmd_on },
+  { PAUSE, cmd_pause },
   { PRINT, cmd_print },
   { READ, cmd_read },
   { REM, cmd_rem },
@@ -368,6 +371,34 @@ cmd_on (struct statement_header *stmt)
     push_sub ();
   current_line = line->line_number;
   current_statement = 0;
+}
+
+void
+cmd_pause (struct statement_header *stmt)
+{
+  double value;
+  unsigned short *tp;
+  struct timespec time, time_left;
+  int status;
+
+  /* Evaluate the time expression */
+  tp = &stmt->tokens[0];
+  value = eval_number (&tp);
+  if (value > 0)
+    {
+      time.tv_sec = value;
+      time.tv_nsec = (value - time.tv_sec) * 1.0e+9;
+      status = nanosleep (&time, &time_left);
+      if (status < 0)
+	{
+	  if (errno == EINTR)
+	    printf ("PAUSE - INTERRUPTED %.5G SECONDS EARLY\n",
+		    time_left.tv_sec + time_left.tv_nsec / 1.0e+9);
+	  else
+	    fprintf (stderr, "PAUSE - %s\n", strerror(errno));
+	}
+    }
+  return;
 }
 
 void

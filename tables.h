@@ -169,6 +169,7 @@ void cmd_load (struct statement_header *);
 void cmd_new (struct statement_header *);
 void cmd_next (struct statement_header *);
 void cmd_on (struct statement_header *);
+void cmd_pause (struct statement_header *);
 void cmd_print (struct statement_header *);
 void cmd_read (struct statement_header *);
 void cmd_rem (struct statement_header *);

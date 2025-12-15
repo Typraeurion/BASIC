@@ -1517,7 +1517,7 @@ variable, then continue the program after that point.
 @end example
 @end cartouche
 
-@node ON GO, Program Management, FOR and NEXT, Flow Control
+@node ON GO, PAUSE, FOR and NEXT, Flow Control
 @subsection Case Switching with @code{ON} / @code{GO}...
 @cindex selective jump
 @cindex switching
@@ -1549,6 +1549,30 @@ go to the first line number in the list.  If the expression is greater
 than the number of line numbers in the list, @sc{basic} will skip over
 the @code{GOTO} / @code{GOSUB} part of the @code{ON} statement and
 continue to the next statement.
+
+@node PAUSE, Program Management, ON GO, Flow Control
+@subsection Timed delay
+@cindex delay
+@cindex timed delay
+@stindex @code{PAUSE}
+
+On modern computers, @sc{basic} runs many orders of magnitude faster
+than it did on old 8-bit computers from the 1970's or mainframes of
+the 1960's.  Some programs relied on busy do-nothing loops to add
+delays in programs that had repeating events like animation.  In this
+implementation of @sc{basic}, we've provided a @code{PAUSE} statement
+which will cause @sc{basic} to sleep for a specified number of
+seconds, which are specified as a decimal number.  For example,
+
+@cartouche
+@example
+100 PAUSE 12.345
+@end example
+@end cartouche
+
+will have @sc{basic} sleep for 12 seconds and 345 milliseconds.  The
+user may interrupt this pause by pressing @key{Ctrl}-@key{C}, which
+will also stop the program.
 
 @node Program Management, Index, Flow Control, Statements
 @section Program Management

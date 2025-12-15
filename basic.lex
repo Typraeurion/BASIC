@@ -238,6 +238,12 @@ PARSER {
   return PARSER;
 }
 
+PAUSE {
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed PAUSE token\n");
+  return PAUSE;
+}
+
 PRINT	{
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed PRINT command\n");
