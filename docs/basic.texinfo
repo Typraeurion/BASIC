@@ -339,13 +339,18 @@ between those points, and you don't have to change the formula.
 
 @cindex variables
 
-@sc{Basic} has two basic variable types corresponding to its data types:
-numeric variables and string variables.  A numeric variable name
-consists of a series of letters and numbers, with the rule that the
-first character in the name must be a letter.  So, for example, a
+@sc{Basic} has two basic variable types corresponding to its data
+types: numeric variables and string variables.  A numeric variable
+name consists of a series of letters and numbers, with the rule that
+the first character in the name must be a letter.  So, for example, a
 variable name can be as short as @var{X}, or as long as
 @var{A1ANDA2ANDA3ANDA4} or more!  (However, we recommend keeping your
-variable names short.)
+variable names short.)  There is one restriction: a variable name
+cannot begin with certain @sc{basic} keywords.  (Although only some
+keywords are checked, you should avoid all of the ones mentioned in
+this manual.  For example @var{ON3} would not be a valid variable name
+because @code{ON} is a command; likewise @var{TO8} is not valid
+because @code{TO} is a keyword in the @code{FOR} statement.)
 
 A string variable is named just like a numeric variable, but with a
 dollar sign (@samp{$}) tagged at the end, as in @var{A$} or

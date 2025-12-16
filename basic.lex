@@ -35,6 +35,14 @@ signed int current_load_nesting = 0;
   return FLOATINGPOINT;
 }
 
+[0-9]+"E"[-+][0-9]+	{
+  /* Exponential number without an explicit decimal point */
+  yylval.floating_point = strtod (yytext, NULL);
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed floating-point constant %g\n", yylval.floating_point);
+  return FLOATINGPOINT;
+}
+
 [0-9]+	{
   yylval.floating_point = strtod (yytext, NULL);
   /* If the number is out of range, we have to use FLOATINGPOINT. */
@@ -358,6 +366,38 @@ TAB	{
 }
 
 [A-Z][0-9A-Z]*\$?	{
+  /* The following keywords must NOT begin an identifier */
+  static const struct {
+    const char *keyword;
+    int token;
+  } reserved_words[] = {
+    { "AND", AND },
+    { "ELSE", ELSE },
+    { "FOR", FOR },
+    { "GOSUB", GOSUB },
+    { "GOTO", GOTO },
+    { "IF", IF },
+    { "LET", LET },
+    { "LIST", LIST },
+    { "ON", ON },
+    { "OR", OR },
+    { "NEXT", NEXT },
+    { "PRINT", PRINT },
+    { "THEN", THEN },
+    { "TO", TO }
+  };
+
+  for (int i = 0; i < sizeof(reserved_words) / sizeof(reserved_words[0]); i++) {
+    int len = strlen(reserved_words[i].keyword);
+    if (strncasecmp (yytext, reserved_words[i].keyword, len) == 0) {
+      if (tracing & TRACE_PARSER)
+	fprintf (stderr, "Parsed %s reserved word (followed by \"%s\")\n",
+		 reserved_words[i].keyword, &yytext[len]);
+      yyless(len);
+      return reserved_words[i].token;
+    }
+  }
+
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed identifier %s;", yytext);
   yylval.integer = find_var_name (yytext);

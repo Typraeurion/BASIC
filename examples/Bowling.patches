@@ -18,7 +18,7 @@ REM Second, we'll let the user enter a name for each player.
 1880 A(I,J,K)=0
 1890 NEXT K: NEXT J: NEXT I
 2610 PRINT N$(P);", PRESS ENTER TO GET THE BALL GOING."
-REM 3600 PRINT "PLAYER:";P;"FRAME:";F;"BALL:";B
+
 REM Note: the 3rd element of A(<player>,<frame>,3) indicates the type of
 REM bonus for the frame: 1="error" (at least 1 pin still standing),
 REM 2="spare", 3="strike".
