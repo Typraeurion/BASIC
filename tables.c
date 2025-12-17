@@ -172,7 +172,7 @@ get_indices (struct list_header *index_list, unsigned short *indices,
 	    fputc (',', stderr);
 	}
       /* Is this a valid index? */
-      if ((d < 0.0) || (d > (double) UINT_MAX))
+      if ((d < 0.0) || (d > (double) USHRT_MAX))
 	{
 	  if (current_line == (unsigned long) -1)
 	    printf ((dim_or_index == DIM)
