@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -433,7 +434,8 @@ cmd_load (struct statement_header *stmt)
   load_file = fopen (filename->contents, "r");
   if (load_file == NULL)
     {
-      perror ("ERROR - LOAD: ");
+      fprintf (stderr, "ERROR - LOAD: %s: %s\n",
+	       filename->contents, strerror(errno));
       return;
     }
 
@@ -462,7 +464,8 @@ cmd_save (struct statement_header *stmt)
   save_file = fopen (filename->contents, "w");
   if (save_file == NULL)
     {
-      perror ("ERROR - SAVE: ");
+      fprintf (stderr, "ERROR - SAVE: %s: %s\n",
+	       filename->contents, strerror(errno));
       return;
     }
 

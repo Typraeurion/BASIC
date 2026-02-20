@@ -485,10 +485,15 @@ eval_fn_or_array (unsigned short id, struct list_header *arg_list)
   fn_or_array = find_function (id);
   if (fn_or_array == NULL)
     {
-      fprintf (stderr,
-	       "eval_fn_or_array(): called for %s, which is not in the function table\n",
-	       name_table[id]->contents);
-      return (var_u) (struct string_value *) NULL;
+      /* The original BASIC allowed undimensioned
+       * arrays with a default size of 10 */
+      fn_or_array = _dim_internal (id, arg_list->num_items, SIZE_TEN);
+      if (fn_or_array == NULL) {
+	fprintf (stderr,
+		 "eval_fn_or_array(): called for %s, which is not in the function table\n",
+		 name_table[id]->contents);
+	return (var_u) (struct string_value *) NULL;
+      }
     }
 
   /* Get the arguments */

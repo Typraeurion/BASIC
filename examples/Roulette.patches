@@ -1,0 +1,7 @@
+REM The original program assumes string inputs can be separated by a comma, but
+REM I can find no actual documentation of any string separator other than newline.
+40 PRINT "ENTER THE CURRENT DATE (AS IN 'JANUARY 23') -";
+50 INPUT D$
+60 PRINT "ENTER THE CURRENT YEAR";
+70 INPUT E$
+3165 PRINT
