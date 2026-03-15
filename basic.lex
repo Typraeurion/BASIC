@@ -222,6 +222,12 @@ NEXT	{
   return NEXT;
 }
 
+NOT	{
+  if (tracing & TRACE_PARSER)
+    fprintf (stderr, "Parsed NOT operator\n");
+  return NOT;
+}
+
 OFF	{
   if (tracing & TRACE_PARSER)
     fprintf (stderr, "Parsed OFF token\n");
@@ -381,6 +387,7 @@ TAB	{
     { "LIST", LIST },
     { "ON", ON },
     { "OR", OR },
+    { "NOT", NOT },
     { "NEXT", NEXT },
     { "PRINT", PRINT },
     { "THEN", THEN },

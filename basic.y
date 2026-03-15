@@ -86,6 +86,7 @@ static void dump_tokens (unsigned short *);
 %left '*' '/'
 %left '^'
 %right NEG
+%right NOT
 /* Non-keyword tokens */
 %token <floating_point> FLOATINGPOINT
 %token <integer> IDENTIFIER
@@ -722,7 +723,7 @@ simplenumvarlist: /* empty */
     ;
 
 /* Define the meaning of an `expression' */
-assignment: numvariable '=' arithexpr
+assignment: numvariable '=' numexpression
     {
       /* Enlarge the first token list to include the second
        * and the equals sign */
@@ -966,11 +967,20 @@ condexpr: arithexpr
     | condexpr AND condexpr
     {
       if (tracing & TRACE_GRAMMAR)
-	fprintf (stderr, "Make sure both conditions are true\n");
+	fprintf (stderr, "Succeed if both conditions are true\n");
       /* Enlarge the first token list to include both expressions,
        * the operator, and surrounding `phantom' parentheses. */
       $<tokens>$ = add_tokens
 	("t*t#t", '{', $<tokens>1, AND, $<tokens>3, '}');
+    }
+    | NOT condexpr
+    {
+      if (tracing & TRACE_GRAMMAR)
+	fprintf (stderr, "Succeed if the condition is false\n");
+      /* Enlarge the first token list to include the operator,
+       * expression, and surrounding `phantom' parentheses. */
+      $<tokens>$ = add_tokens
+	("tt*t", '{', NOT, $<tokens>2, '}');
     }
     | condexpr OR condexpr
     {

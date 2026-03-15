@@ -251,7 +251,7 @@ eval_numexpr (unsigned short **tpp)
   unsigned short op;	/* Operator */
   double result;
 
-  /* Check for a unary operation -- negation */
+  /* Check for a unary operation -- negation or NOT */
   if (*tp == NEG)
     {
       *tpp = ++tp;
@@ -259,6 +259,15 @@ eval_numexpr (unsigned short **tpp)
       result = -op1;
       if (tracing & TRACE_EXPRESSIONS)
 	fprintf(stderr, "- %g = %g\n", op1, result);
+      return result;
+    }
+  if (*tp == NOT)
+    {
+      *tpp = ++tp;
+      op1 = eval_number (tpp);
+      result = (op1 == 0.0);
+      if (tracing & TRACE_EXPRESSIONS)
+	fprintf(stderr, "NOT %g = %g\n", op1, result);
       return result;
     }
 

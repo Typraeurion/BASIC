@@ -69,12 +69,13 @@ const struct {
   { TO, " TO " },
   { TRACE, "TRACE " },
   /* Arithmetic operators */
-  { OR, " OR " },
   { AND, " AND " },
   { LESSEQ, "<=" },
   { GRTREQ, ">=" },
-  { NOTEQ, "<>" },
   { NEG, "-" },
+  { NOT, "NOT " },
+  { NOTEQ, "<>" },
+  { OR, " OR " },
   /* Non-keyword tokens */
   { TAB, "TAB" },
 };

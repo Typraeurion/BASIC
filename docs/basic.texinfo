@@ -22,7 +22,7 @@ pi
 @author{by @email{trevin@@xmission.com, Trevin Beattie}}
 
 @page
-Copyleft @copyright{}MM Trevin Beattie
+Copyleft @copyright{}MM--MMXXVI Trevin Beattie
 
 Parts of this manual and much researched data comes from the book
 @cite{Basic Computer Games} edited by @w{David H.} Ahl and copyright
@@ -537,13 +537,16 @@ thus the expression @samp{@w{"USA" < "United States"}} evaluates as
 true.
 
 @findex AND
+@findex NOT
 @findex OR
 @cindex boolean operators
 
-In addition to the relational operators, there are two boolean
-operators: @code{AND} and @code{OR}.  These can be used with relational
-comparisons to test two conditions and evaluates to true if both or
-either condition is true.
+In addition to the relational operators, there are three boolean
+operators: @code{AND}, @code{NOT}, and @code{OR}.  These can be used
+with relational comparisons to test one or two conditions; @code{AND}
+evaluates to true if both conditions are true, @code{OR} evaluates to
+true if either condition is true, and @code{NOT} evaluates to true if
+the condition is false.
 
 The `truth' result of a logical operation is actually a value of either
 zero or one.  This is important when reading some existing @sc{basic}
@@ -585,6 +588,7 @@ before those below them.
 @item @samp{*}, @samp{/} (multiplication and division)
 @item @samp{+}, @samp{-} (addition and subtraction)
 @item Relational operators*
+@item @samp{NOT}
 @item @samp{AND}
 @item @samp{OR}
 @end enumerate
@@ -1670,7 +1674,7 @@ LOAD "examples/Animal.more"
 @printindex st
 
 @node Index of Functions, Index of Statements, , Top
-@unnumbered Index of Functions
+@unnumbered Index of Functions and Operators
 @printindex fn
 
 @bye
