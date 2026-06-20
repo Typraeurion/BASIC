@@ -378,18 +378,26 @@ TAB	{
     int token;
   } reserved_words[] = {
     { "AND", AND },
+    { "DATA", DATA },
+    { "DEF", DEF },
+    { "DIM", DIM },
     { "ELSE", ELSE },
     { "FOR", FOR },
     { "GOSUB", GOSUB },
     { "GOTO", GOTO },
     { "IF", IF },
+    { "INPUT", INPUT },
     { "LET", LET },
     { "LIST", LIST },
     { "ON", ON },
     { "OR", OR },
     { "NOT", NOT },
     { "NEXT", NEXT },
+    { "PAUSE", PAUSE },
     { "PRINT", PRINT },
+    { "READ", READ },
+    { "RESTORE", RESTORE },
+    { "STEP", STEP },
     { "THEN", THEN },
     { "TO", TO }
   };
